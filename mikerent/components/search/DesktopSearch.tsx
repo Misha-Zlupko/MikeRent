@@ -1,0 +1,147 @@
+"use client";
+
+import React from "react";
+import { Search, MapPinHouse, Plus, Minus } from "lucide-react";
+import { SeasonCalendar, DateRange } from "../SeasonCalendar";
+import { formatDateRange } from "./utils";
+import { OpenSection } from "../SearchForm";
+
+/* ================= TYPES ================= */
+
+type GuestRow = [
+  label: string,
+  value: number,
+  setter: React.Dispatch<React.SetStateAction<number>>,
+  min: number
+];
+
+type Props = {
+  dateRange: DateRange;
+  setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
+
+  adults: number;
+  setAdults: React.Dispatch<React.SetStateAction<number>>;
+
+  childrenCount: number;
+  setChildrenCount: React.Dispatch<React.SetStateAction<number>>;
+
+  openSection: OpenSection;
+  setOpenSection: React.Dispatch<React.SetStateAction<OpenSection>>;
+};
+
+/* ================= COMPONENT ================= */
+
+export const DesktopSearch = ({
+  dateRange,
+  setDateRange,
+  adults,
+  setAdults,
+  childrenCount,
+  setChildrenCount,
+  openSection,
+  setOpenSection,
+}: Props) => {
+  const totalGuests = adults + childrenCount;
+
+  const guestRows: GuestRow[] = [
+    ["Дорослих", adults, setAdults, 1],
+    ["Дітей", childrenCount, setChildrenCount, 0],
+  ];
+
+  return (
+    <div className="hidden sm:block w-full max-w-[820px]">
+      <form className="flex items-center rounded-full bg-[#f1f1f1] p-2 shadow-md">
+        {/* WHERE */}
+        <div className="flex flex-col px-4 py-2 flex-1 rounded-full hover:bg-white transition cursor-pointer">
+          <span className="text-xs font-semibold text-muted">Де</span>
+          <div className="flex items-center gap-2">
+            <MapPinHouse className="h-5 w-5 text-main" />
+            <span className="font-medium text-main">Чорноморськ</span>
+          </div>
+        </div>
+
+        <div className="h-8 w-px bg-border" />
+
+        {/* WHEN */}
+        <div className="relative flex-1">
+          <div
+            onClick={() =>
+              setOpenSection(openSection === "when" ? null : "when")
+            }
+            className={`px-5 py-3 rounded-full cursor-pointer transition flex flex-col ${
+              openSection === "when" ? "bg-white shadow-sm" : "hover:bg-white"
+            }`}
+          >
+            <span className="text-xs font-semibold text-muted">Коли</span>
+            <span className="font-medium truncate">
+              {formatDateRange(dateRange)}
+            </span>
+          </div>
+
+          {openSection === "when" && (
+            <div className="absolute left-1/2 top-[calc(100%+12px)] -translate-x-1/2 z-50 rounded-2xl bg-white p-6 shadow-xl">
+              <SeasonCalendar value={dateRange} onChange={setDateRange} />
+            </div>
+          )}
+        </div>
+
+        <div className="h-8 w-px bg-border" />
+
+        {/* WHO */}
+        <div className="relative flex-1">
+          <div
+            onClick={() => setOpenSection(openSection === "who" ? null : "who")}
+            className={`px-5 py-3 rounded-full cursor-pointer transition flex flex-col ${
+              openSection === "who" ? "bg-white shadow-sm" : "hover:bg-white"
+            }`}
+          >
+            <span className="text-xs font-semibold text-muted">Хто</span>
+            <span className="font-medium">{totalGuests} гостей</span>
+          </div>
+
+          {openSection === "who" && (
+            <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[360px] rounded-2xl bg-white p-6 shadow-xl">
+              <div className="space-y-4">
+                {guestRows.map(([label, value, setter, min]) => (
+                  <div
+                    key={label}
+                    className="flex justify-between items-center"
+                  >
+                    <span className="font-medium">{label}</span>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setter((v) => Math.max(min, v - 1))}
+                        className="h-9 w-9 rounded-full border flex items-center justify-center"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+
+                      <span className="w-6 text-center">{value}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => setter((v) => v + 1)}
+                        className="h-9 w-9 rounded-full border flex items-center justify-center"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="ml-2 h-12 px-6 rounded-full bg-main text-white flex items-center gap-2"
+        >
+          <Search className="h-5 w-5" />
+          Пошук
+        </button>
+      </form>
+    </div>
+  );
+};
