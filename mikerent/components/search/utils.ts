@@ -1,4 +1,4 @@
-import { DateRange } from "../SeasonCalendar";
+import { DateRange } from "../SeasonCalendarComponent";
 
 export function formatDateRange(range: DateRange) {
   if (!range.from) return "Оберіть дати";

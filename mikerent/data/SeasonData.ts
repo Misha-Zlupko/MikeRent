@@ -1,4 +1,6 @@
-export const SEASON = {
+import { Season } from "./SeasonDataTypes";
+
+export const SEASON: Season = {
   weekDays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
   months: [
     {

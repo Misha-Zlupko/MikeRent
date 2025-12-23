@@ -10,9 +10,9 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { SeasonCalendar, DateRange } from "../SeasonCalendar";
+import { SeasonCalendar, DateRange } from "../SeasonCalendarComponent";
 import { formatDateRange, getMobileSearchLabel } from "./utils";
-import { OpenSection } from "../SearchForm";
+import { OpenSection } from "./SearchFormComponent";
 
 type GuestRow = [
   label: string,
