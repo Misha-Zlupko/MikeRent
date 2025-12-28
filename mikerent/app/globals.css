@@ -102,3 +102,89 @@ body {
   max-height: 1000px;
   opacity: 1;
 }
+
+.comments-pagination .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  background: #d1d5db;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.comments-pagination .swiper-pagination-bullet-active {
+  background: #00a1f1;
+  transform: scale(1.4);
+}
+
+/* ===== COMMENTS SWIPER ARROWS ===== */
+
+.comments-swiper {
+  position: relative;
+  padding: 0 72px; /* место под стрелки */
+}
+
+/* общие стили */
+
+.comments-swiper.swiper-horizontal .swiper-button-prev,
+.comments-swiper.swiper-horizontal .swiper-button-next {
+  top: 55%;
+}
+
+.comments-swiper .swiper-button-prev,
+.comments-swiper .swiper-button-next {
+  top: 55%;
+  transform: translateY(-50%);
+
+  width: 34px;
+  height: 34px;
+  padding: 10px;
+
+  background: white;
+  border-radius: 9999px;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  color: #2563eb; /* main / blue-600 */
+  transition: all 0.25s ease;
+
+  opacity: 0.85;
+}
+
+/* позиции */
+.comments-swiper .swiper-button-prev {
+  left: 12px;
+}
+
+.comments-swiper .swiper-button-next {
+  right: 12px;
+}
+
+/* hover */
+.comments-swiper .swiper-button-prev:hover,
+.comments-swiper .swiper-button-next:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.18);
+}
+
+/* иконки */
+.comments-swiper .swiper-button-prev::after,
+.comments-swiper .swiper-button-next::after {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* отключаем на мобилке */
+@media (max-width: 640px) {
+  .comments-swiper .swiper-button-prev,
+  .comments-swiper .swiper-button-next {
+    display: none;
+  }
+}
+
+.swiper-wrapper {
+  margin-bottom: 20px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}

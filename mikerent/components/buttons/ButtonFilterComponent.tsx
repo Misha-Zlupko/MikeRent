@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { House, BedDouble, School } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
-type ApartmentType = "apartment" | "house" | "room";
+import type { ApartmentType } from "@/data/ApartmentsTypes";
 
 type FilterItem = {
   id: ApartmentType;
@@ -13,38 +11,29 @@ type FilterItem = {
 };
 
 const filters: FilterItem[] = [
-  {
-    id: "apartment",
-    label: "Квартири",
-    Icon: BedDouble,
-  },
-  {
-    id: "house",
-    label: "Будинки",
-    Icon: House,
-  },
-  {
-    id: "room",
-    label: "Номери",
-    Icon: School,
-  },
+  { id: "apartment", label: "Квартири", Icon: School },
+  { id: "house", label: "Будинки", Icon: House },
+  { id: "room", label: "Номери", Icon: BedDouble },
 ];
 
-export const ButtonFilterApartments = () => {
-  const [activeType, setActiveType] = useState<ApartmentType | null>(null);
+type Props = {
+  value: ApartmentType | null;
+  onChange: (type: ApartmentType | null) => void;
+};
 
+export const ButtonFilterApartments = ({ value, onChange }: Props) => {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 justify-center flex-wrap">
       {filters.map(({ id, label, Icon }) => {
-        const isActive = activeType === id;
+        const isActive = value === id;
 
         return (
           <button
             key={id}
-            onClick={() => setActiveType(id)}
+            onClick={() => onChange(isActive ? null : id)}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-full
-              border text-sm font-medium whitespace-wrap
+              border text-sm font-medium whitespace-nowrap
               transition-all duration-200
               ${
                 isActive

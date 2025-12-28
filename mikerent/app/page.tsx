@@ -1,7 +1,7 @@
 import { SearchForm } from "@/components/search/SearchFormComponent";
-import { ButtonFilterApartments } from "@/components/buttons/ButtonFilterComponent";
 import { ApartmentsGrid } from "@/components/apartments/ApartmentsGridComponent";
 import { apartments } from "@/data/ApartmentsData";
+import { CustomerComments } from "@/components/СustomerСommentsComponent";
 
 export default function Home() {
   return (
@@ -9,13 +9,11 @@ export default function Home() {
       <section className="mt-8 mb-8 container">
         <SearchForm />
       </section>
-
       <section className="container mb-8">
-        <ButtonFilterApartments />
-      </section>
-
-      <section className="container">
         <ApartmentsGrid apartments={apartments} />
+      </section>
+      <section className="inset-0 bg-gradient-to-br from-indigo-50 via-white to-pink-50">
+        <CustomerComments />
       </section>
     </main>
   );

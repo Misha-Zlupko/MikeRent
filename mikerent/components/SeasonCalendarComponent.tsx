@@ -61,6 +61,7 @@ export const SeasonCalendar = ({ value, onChange, onComplete }: Props) => {
     <div className="space-y-4 w-[280px]">
       <div className="flex items-center justify-between">
         <button
+          type="button"
           onClick={prevMonth}
           disabled={monthIndex === 0}
           className="disabled:opacity-30"
@@ -73,6 +74,7 @@ export const SeasonCalendar = ({ value, onChange, onComplete }: Props) => {
         </h3>
 
         <button
+          type="button"
           onClick={nextMonth}
           disabled={monthIndex === maxIndex}
           className="disabled:opacity-30"

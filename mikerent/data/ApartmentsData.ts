@@ -1,9 +1,6 @@
 import { Apartment } from "./ApartmentsTypes";
 
 export const apartments: Apartment[] = [
-  // =====================
-  // 🏢 КВАРТИРИ (1–8)
-  // =====================
   {
     id: "apt-1",
     title: "Затишна квартира біля моря",

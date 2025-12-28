@@ -1,8 +1,8 @@
 export type ApartmentType = "apartment" | "house" | "room";
 
 export type DateRangeISO = {
-  from: string; // YYYY-MM-DD
-  to: string; // YYYY-MM-DD
+  from: string;
+  to: string;
 };
 
 export type ApartmentAvailability = {

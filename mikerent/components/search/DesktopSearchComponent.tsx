@@ -76,9 +76,9 @@ export const DesktopSearch = ({
   return (
     <div className="hidden sm:block w-full max-w-[820px]">
       <form className="flex items-center rounded-full bg-[#f1f1f1] p-2 shadow-md">
-        <div className="flex flex-col px-4 py-2 flex-1 rounded-full hover:bg-white transition cursor-pointer">
+        <div className="flex flex-col px-4 py-2 flex-1 rounded-full transition cursor-default">
           <span className="text-xs font-semibold text-muted">Де</span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 select-none">
             <MapPinHouse className="h-5 w-5 text-main" />
             <span className="font-medium text-main">Чорноморськ</span>
           </div>
