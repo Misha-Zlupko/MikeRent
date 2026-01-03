@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, House } from "lucide-react";
 
 export const HeaderComponent = () => {
   const hasFavorites = false;
@@ -22,15 +22,29 @@ export const HeaderComponent = () => {
         >
           MikeRent
         </Link>
-        <Link href="/favorites" className="" aria-label="Обрані квартири">
-          <Heart
-            className={`h-[38px]
-    w-[38px] h-6 w-6 flex-shrink-0 transition-colors ${
-      hasFavorites
-        ? "fill-red-500 text-red-500"
-        : "text-white hover:text-primary"
-    }`}
-          />
+        <Link href="/favorites" aria-label="Обрані квартири">
+          <div
+            className="
+      flex h-14 w-14 items-center justify-center
+      rounded-full
+      transition
+      hover:bg-white/15
+      active:scale-95
+    "
+          >
+            <Heart
+              className={`
+        h-8 w-8
+        text-white
+        transition-all
+        ${
+          hasFavorites
+            ? "fill-white scale-105"
+            : "fill-transparent hover:scale-110"
+        }
+      `}
+            />
+          </div>
         </Link>
       </div>
     </header>

@@ -14,14 +14,13 @@ export const ApartmentsGrid = ({ apartments }: Props) => {
   const [itemsPerLoad, setItemsPerLoad] = useState(8);
   const [visibleCount, setVisibleCount] = useState(8);
 
-  // responsive limit
   useEffect(() => {
     const updateLimit = () => {
       const width = window.innerWidth;
       let limit = 8;
 
-      if (width >= 1024) limit = 16; // ПК (4x4)
-      else limit = 8; // mobile + tablet (2x4)
+      if (width >= 1024) limit = 16;
+      else limit = 8;
 
       setItemsPerLoad(limit);
       setVisibleCount(limit);
@@ -32,13 +31,11 @@ export const ApartmentsGrid = ({ apartments }: Props) => {
     return () => window.removeEventListener("resize", updateLimit);
   }, []);
 
-  // фильтрация (готово к 100+ объектов)
   const filteredApartments = useMemo(() => {
     if (!typeFilter) return apartments;
     return apartments.filter((a) => a.type === typeFilter);
   }, [apartments, typeFilter]);
 
-  // сброс load more при смене фильтра
   useEffect(() => {
     setVisibleCount(itemsPerLoad);
   }, [filteredApartments, itemsPerLoad]);
@@ -48,12 +45,10 @@ export const ApartmentsGrid = ({ apartments }: Props) => {
 
   return (
     <>
-      {/* ФИЛЬТР */}
       <div className="mb-6">
         <ButtonFilterApartments value={typeFilter} onChange={setTypeFilter} />
       </div>
 
-      {/* GRID */}
       {filteredApartments.length === 0 ? (
         <div className="py-12 text-center text-gray-500">
           Нічого не знайдено 😔
@@ -65,6 +60,7 @@ export const ApartmentsGrid = ({ apartments }: Props) => {
               grid
               grid-cols-2
               gap-4
+              md:grid-cols-3
               lg:grid-cols-4
             "
           >

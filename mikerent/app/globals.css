@@ -183,8 +183,15 @@ body {
 }
 
 .swiper-wrapper {
-  margin-bottom: 20px;
-  margin-top: 20px;
   display: flex;
   align-items: center;
+
+  padding-bottom: 20px;
+}
+.comments-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.comments-swiper .swiper-slide {
+  height: auto;
 }

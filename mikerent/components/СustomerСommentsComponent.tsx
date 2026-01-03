@@ -10,10 +10,17 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
+/* ===== helpers ===== */
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("uk-UA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 export const CustomerComments = () => {
   return (
     <div className="container relative overflow-hidden py-20">
-      <div className="absolute" />
       <h2 className="mb-14 text-center text-3xl font-bold tracking-tight text-gray-900">
         Відгуки наших клієнтів
       </h2>
@@ -34,27 +41,27 @@ export const CustomerComments = () => {
         className="comments-swiper"
       >
         {COMMENTS.map((comment) => (
-          <SwiperSlide key={comment.id} className="h-auto">
+          <SwiperSlide key={comment.id} className="h-full flex">
             <div
               className="
-                  group
-                  flex
-                  h-full
-                  flex-col
-                  rounded-3xl
-                  border
-                  border-white/40
-                  bg-white/70
-                  p-6
-                  backdrop-blur-xl
-                  shadow-lg
-                  transition-all
-                  duration-300
-                  hover:-translate-y-2
-                  hover:shadow-1xl
-                "
+                group
+                flex
+                flex-col
+                h-full
+                rounded-3xl
+                border border-white/40
+                bg-white/70
+                p-6
+                backdrop-blur-xl
+                shadow-lg
+                transition-all
+                duration-300
+                hover:-translate-y-2
+                hover:shadow-1xl
+              "
             >
-              <div className="mb-5 flex items-center gap-4">
+              {/* HEADER */}
+              <div className="mb-2 flex items-center gap-4">
                 <div className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-white">
                   <Image
                     src={comment.avatar}
@@ -66,7 +73,12 @@ export const CustomerComments = () => {
 
                 <div>
                   <p className="font-semibold text-gray-900">{comment.name}</p>
-                  <div className="flex text-yellow-400">
+
+                  <p className="text-xs text-gray-500">
+                    {formatDate(comment.date)}
+                  </p>
+
+                  <div className="mt-1 flex text-yellow-400">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <svg
                         key={i}
@@ -81,7 +93,17 @@ export const CustomerComments = () => {
                 </div>
               </div>
 
-              <p className="mt-auto text-sm leading-relaxed text-gray-700">
+              {/* TEXT */}
+              <p
+                className="
+                  mt-auto
+                  mb-auto
+                  text-sm
+                  leading-relaxed
+                  text-gray-700
+                  line-clamp-4
+                "
+              >
                 “{comment.text}”
               </p>
             </div>

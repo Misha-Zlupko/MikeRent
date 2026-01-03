@@ -3,4 +3,5 @@ export type Comment = {
   name: string;
   text: string;
   avatar: string;
+  date: string;
 };
