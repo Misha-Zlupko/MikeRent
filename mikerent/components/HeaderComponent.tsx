@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, House } from "lucide-react";
+import { Heart } from "lucide-react";
 
 export const HeaderComponent = () => {
   const hasFavorites = false;

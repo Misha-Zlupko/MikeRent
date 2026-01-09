@@ -1,12 +1,9 @@
-/* @import "tailwindcss"; */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
 }
 
 .container {
@@ -174,7 +171,6 @@ body {
   font-weight: 700;
 }
 
-/* отключаем на мобилке */
 @media (max-width: 640px) {
   .comments-swiper .swiper-button-prev,
   .comments-swiper .swiper-button-next {

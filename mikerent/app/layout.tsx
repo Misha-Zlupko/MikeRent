@@ -23,10 +23,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
-      <body className={`${roboto.variable} antialiased`}>
+    <html lang="uk">
+      <body
+        className={`
+          ${roboto.variable}
+          antialiased
+          min-h-screen
+          flex
+          flex-col
+        `}
+      >
         <HeaderComponent />
-        {children}
+
+        <main className="flex-1">{children}</main>
+
         <FooterComponent />
       </body>
     </html>

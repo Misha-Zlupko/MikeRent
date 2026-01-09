@@ -6,9 +6,8 @@ import { Phone, Send, Music2 } from "lucide-react";
 export const FooterComponent = () => {
   return (
     <footer className="border-t border-white/10 bg-main">
-      <div className="container py-12">
+      <div className="container py-10">
         <div className="flex flex-col md:flex-row items-center justify-between colum">
-          {/* ЛОГО */}
           <Link
             href="https://t.me/your_telegram_username"
             target="_blank"
@@ -16,8 +15,6 @@ export const FooterComponent = () => {
           >
             MikeRent
           </Link>
-
-          {/* КОНТАКТЫ */}
           <div className="flex flex-col md:flex-row items-center gap-4 mr-auto md:mr-0">
             {/* P className="mr-auto"HONE */}
             <div className="mr-auto">
@@ -67,8 +64,7 @@ export const FooterComponent = () => {
             </div>
           </div>
         </div>
-
-        <div className="mt-6 text-center text-xs text-white/60">
+        <div className="mt-5 text-center text-xs text-white/60">
           © 2025 MikeRent. Всі права захищені.
         </div>
       </div>
