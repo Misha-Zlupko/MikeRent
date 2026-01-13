@@ -5,6 +5,7 @@ import { Search, MapPinHouse, Plus, Minus } from "lucide-react";
 import { SeasonCalendar, DateRange } from "../SeasonCalendarComponent";
 import { formatDateRange } from "./utils";
 import { OpenSection } from "./SearchFormComponent";
+import { useState } from "react";
 
 type GuestRow = [
   label: string,
@@ -15,35 +16,39 @@ type GuestRow = [
 
 type Props = {
   dateRange: DateRange;
-  setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
 
   adults: number;
-  setAdults: React.Dispatch<React.SetStateAction<number>>;
 
   childrenCount: number;
-  setChildrenCount: React.Dispatch<React.SetStateAction<number>>;
 
   openSection: OpenSection;
   setOpenSection: React.Dispatch<React.SetStateAction<OpenSection>>;
+  onSearch: (params: {
+    dateRange: DateRange;
+    adults: number;
+    childrenCount: number;
+  }) => void;
 };
 
 export const DesktopSearch = ({
   dateRange,
-  setDateRange,
   adults,
-  setAdults,
   childrenCount,
-  setChildrenCount,
   openSection,
   setOpenSection,
+  onSearch,
 }: Props) => {
-  const totalGuests = adults + childrenCount;
+  const [localDateRange, setLocalDateRange] = useState(dateRange);
+  const [localAdults, setLocalAdults] = useState(adults);
+  const [localChildren, setLocalChildren] = useState(childrenCount);
+
+  const totalGuests = localAdults + localChildren;
   const whenRef = useRef<HTMLDivElement | null>(null);
   const whoRef = useRef<HTMLDivElement | null>(null);
 
   const guestRows: GuestRow[] = [
-    ["Дорослих", adults, setAdults, 1],
-    ["Дітей", childrenCount, setChildrenCount, 0],
+    ["Дорослих", localAdults, setLocalAdults, 1],
+    ["Дітей", localChildren, setLocalChildren, 0],
   ];
 
   useEffect(() => {
@@ -97,7 +102,7 @@ export const DesktopSearch = ({
           >
             <span className="text-xs font-semibold text-muted">Коли</span>
             <span className="font-medium truncate">
-              {formatDateRange(dateRange)}
+              {formatDateRange(localDateRange)}
             </span>
           </div>
 
@@ -106,7 +111,10 @@ export const DesktopSearch = ({
               ref={whenRef}
               className="absolute left-1/2 top-[calc(100%+12px)] -translate-x-1/2 z-50 rounded-2xl bg-white p-6 shadow-xl"
             >
-              <SeasonCalendar value={dateRange} onChange={setDateRange} />
+              <SeasonCalendar
+                value={localDateRange}
+                onChange={setLocalDateRange}
+              />
             </div>
           )}
         </div>
@@ -173,6 +181,13 @@ export const DesktopSearch = ({
     active:translate-y-0
     active:scale-95
   "
+          onClick={() =>
+            onSearch({
+              dateRange: localDateRange,
+              adults: localAdults,
+              childrenCount: localChildren,
+            })
+          }
         >
           <Search className="h-5 w-5" />
           Пошук

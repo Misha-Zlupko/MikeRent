@@ -13,6 +13,7 @@ import {
 import { SeasonCalendar, DateRange } from "../SeasonCalendarComponent";
 import { formatDateRange, getMobileSearchLabel } from "./utils";
 import { OpenSection } from "./SearchFormComponent";
+import { useState } from "react";
 
 type GuestRow = [
   label: string,
@@ -29,13 +30,15 @@ type Props = {
   setOpenSection: React.Dispatch<React.SetStateAction<OpenSection>>;
 
   dateRange: DateRange;
-  setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
 
   adults: number;
-  setAdults: React.Dispatch<React.SetStateAction<number>>;
 
   childrenCount: number;
-  setChildrenCount: React.Dispatch<React.SetStateAction<number>>;
+  onSearch: (params: {
+    dateRange: DateRange;
+    adults: number;
+    childrenCount: number;
+  }) => void;
 };
 
 export const MobileSearch = ({
@@ -44,17 +47,18 @@ export const MobileSearch = ({
   openSection,
   setOpenSection,
   dateRange,
-  setDateRange,
   adults,
-  setAdults,
   childrenCount,
-  setChildrenCount,
+  onSearch,
 }: Props) => {
-  const totalGuests = adults + childrenCount;
+  const [localDateRange, setLocalDateRange] = useState(dateRange);
+  const [localAdults, setLocalAdults] = useState(adults);
+  const [localChildren, setLocalChildren] = useState(childrenCount);
 
+  const totalGuests = localAdults + localChildren;
   const guestRows: GuestRow[] = [
-    ["Дорослих", adults, setAdults, 1],
-    ["Дітей", childrenCount, setChildrenCount, 0],
+    ["Дорослих", localAdults, setLocalAdults, 1],
+    ["Дітей", localChildren, setLocalChildren, 0],
   ];
 
   return (
@@ -65,7 +69,7 @@ export const MobileSearch = ({
       >
         <Search className="h-5 w-5" />
         <span className="truncate text-sm font-medium">
-          {getMobileSearchLabel(dateRange, totalGuests)}
+          {getMobileSearchLabel(localDateRange, totalGuests)}
         </span>
       </button>
 
@@ -77,7 +81,6 @@ export const MobileSearch = ({
             </button>
             <span className="font-semibold text-base">Пошук</span>
           </div>
-
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             <div className="rounded-xl border p-4">
               <span className="text-xs text-muted">Де</span>
@@ -86,7 +89,6 @@ export const MobileSearch = ({
                 Чорноморськ
               </div>
             </div>
-
             <div className="rounded-xl border overflow-hidden">
               <button
                 onClick={() =>
@@ -109,7 +111,10 @@ export const MobileSearch = ({
                 }`}
               >
                 <div className="pb-5 pt-5 px-4 flex justify-center">
-                  <SeasonCalendar value={dateRange} onChange={setDateRange} />
+                  <SeasonCalendar
+                    value={localDateRange}
+                    onChange={setLocalDateRange}
+                  />
                 </div>
               </div>
             </div>
@@ -162,11 +167,15 @@ export const MobileSearch = ({
                 </div>
               </div>
             </div>
-
             <button
               onClick={() => {
                 setOpenMobile(false);
                 setOpenSection(null);
+                onSearch({
+                  dateRange: localDateRange,
+                  adults: localAdults,
+                  childrenCount: localChildren,
+                });
               }}
               className="w-full h-12 rounded-full bg-main text-white font-semibold flex items-center justify-center gap-2"
             >

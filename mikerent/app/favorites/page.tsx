@@ -47,7 +47,7 @@ export default function FavoritesPage() {
         Обрані квартири
       </h1>
 
-      <div className="space-y-4">
+      <section className="space-y-4">
         {favoriteApartments.map((apartment) => (
           <div
             key={apartment.id}
@@ -56,7 +56,7 @@ export default function FavoritesPage() {
               flex gap-4
               rounded-2xl
               border
-              bg-white
+            bg-white
               p-4
               shadow-sm
               transition
@@ -115,7 +115,7 @@ export default function FavoritesPage() {
             </button>
           </div>
         ))}
-      </div>
+      </section>
     </main>
   );
 }

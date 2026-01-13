@@ -6,7 +6,7 @@ export const HeaderComponent = () => {
 
   return (
     <header className="bg-main">
-      <div className="container flex items-center justify-between pt-2">
+      <div className="container flex items-center justify-between">
         <Link
           href="/"
           className="
@@ -18,6 +18,7 @@ export const HeaderComponent = () => {
       font-bold
       tracking-tight
       text-white
+      select-none
   "
         >
           MikeRent

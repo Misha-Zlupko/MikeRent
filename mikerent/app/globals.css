@@ -113,14 +113,10 @@ body {
   transform: scale(1.4);
 }
 
-/* ===== COMMENTS SWIPER ARROWS ===== */
-
 .comments-swiper {
   position: relative;
-  padding: 0 72px; /* место под стрелки */
+  padding: 0 72px;
 }
-
-/* общие стили */
 
 .comments-swiper.swiper-horizontal .swiper-button-prev,
 .comments-swiper.swiper-horizontal .swiper-button-next {
@@ -141,13 +137,12 @@ body {
 
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
 
-  color: #2563eb; /* main / blue-600 */
+  color: #2563eb;
   transition: all 0.25s ease;
 
   opacity: 0.85;
 }
 
-/* позиции */
 .comments-swiper .swiper-button-prev {
   left: 12px;
 }
@@ -156,7 +151,6 @@ body {
   right: 12px;
 }
 
-/* hover */
 .comments-swiper .swiper-button-prev:hover,
 .comments-swiper .swiper-button-next:hover {
   opacity: 1;
@@ -164,7 +158,6 @@ body {
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.18);
 }
 
-/* иконки */
 .comments-swiper .swiper-button-prev::after,
 .comments-swiper .swiper-button-next::after {
   font-size: 16px;
