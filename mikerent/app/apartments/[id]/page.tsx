@@ -9,16 +9,14 @@ import { ApartmentBookingCard } from "@/components/apartment/ApartmentBookingCar
 export default function ApartmentPage() {
   const { id } = useParams();
 
-  console.log("Apartment ID:", id);
-
   return (
     <main className="container py-8">
-      <ApartmentHeader />
-      <ApartmentGallery />
+      <ApartmentHeader id={id} />
+      <ApartmentGallery id={id} />
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <ApartmentContent />
-        <ApartmentBookingCard />
+        <ApartmentContent id={id} />
+        <ApartmentBookingCard id={id} />
       </section>
     </main>
   );

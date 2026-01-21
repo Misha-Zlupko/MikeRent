@@ -1,10 +1,20 @@
-export const ApartmentBookingCard = () => {
+import { apartments } from "@/data/ApartmentsData";
+
+type Props = {
+  id: string;
+};
+
+export const ApartmentBookingCard = ({ id }: Props) => {
+  const current = apartments.find((el) => el.id === id);
+
   return (
     <aside className="lg:col-span-1">
       <div className="sticky top-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-end justify-between">
           <div>
-            <span className="text-2xl font-bold">1200 ₴</span>
+            <span className="text-2xl font-bold">
+              {current?.pricePerNight} ₴
+            </span>
             <span className="text-sm text-gray-500"> / ніч</span>
           </div>
 
@@ -43,7 +53,7 @@ export const ApartmentBookingCard = () => {
 
         <div className="mt-4 space-y-2 text-sm text-gray-700">
           <div className="flex justify-between">
-            <span>1200 ₴ × 3 ночі</span>
+            <span>{current?.pricePerNight} ₴ × 3 ночі</span>
             <span>3600 ₴</span>
           </div>
           <div className="flex justify-between">
