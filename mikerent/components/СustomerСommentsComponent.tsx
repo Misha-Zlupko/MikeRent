@@ -18,6 +18,7 @@ const formatDate = (date: string) =>
     year: "numeric",
   });
 
+
 export const CustomerComments = () => {
   return (
     <div className="container relative overflow-hidden py-20">
@@ -38,7 +39,7 @@ export const CustomerComments = () => {
           768: { slidesPerView: 2 },
           1024: { slidesPerView: 3 },
         }}
-        className="comments-swiper"
+        className="comments-swiper !pb-6"
       >
         {COMMENTS.map((comment) => (
           <SwiperSlide key={comment.id} className="h-full flex">

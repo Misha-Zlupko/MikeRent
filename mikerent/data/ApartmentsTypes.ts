@@ -10,6 +10,18 @@ export type ApartmentAvailability = {
   booked: DateRangeISO[];
 };
 
+export type Amenity =
+  | "wifi"
+  | "airConditioner"
+  | "kitchen"
+  | "dishes"
+  | "washingMachine"
+  | "tv"
+  | "parking"
+  | "balcony"
+  | "seaView"
+  | "pool";
+
 export type Apartment = {
   id: string;
   title: string;
@@ -31,6 +43,10 @@ export type Apartment = {
   reviewsCount: number;
 
   description: string;
+
+  mapUrl: string;
+  amenities: Amenity[]; 
+
 
   availability: ApartmentAvailability;
 };

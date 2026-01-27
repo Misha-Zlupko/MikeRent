@@ -16,10 +16,9 @@ export const FooterComponent = () => {
             MikeRent
           </Link>
           <div className="flex flex-col md:flex-row items-center gap-4 mr-auto md:mr-0">
-            {/* P className="mr-auto"HONE */}
             <div className="mr-auto">
               <Link
-                href="tel:+380XXXXXXXXX"
+                href="tel:+380636619621"
                 className="
                   inline-flex items-center gap-2
                   text-white/90 hover:text-white transition

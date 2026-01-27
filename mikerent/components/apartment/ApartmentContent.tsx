@@ -10,9 +10,9 @@ type Props = {
 export const ApartmentContent = ({ id }: Props) => {
   return (
     <div className="lg:col-span-2">
-      <ApartmentFacts />
+      <ApartmentFacts id={id} />
       <ApartmentDescription />
-      <ApartmentAmenities />
+      <ApartmentAmenities id={id}/>
       <ApartmentRules />
     </div>
   );

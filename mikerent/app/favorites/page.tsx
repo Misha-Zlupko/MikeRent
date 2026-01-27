@@ -4,6 +4,7 @@ import { apartments } from "@/data/ApartmentsData";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
+import Link from "next/link";
 
 const FAVORITES_KEY = "favorites";
 
@@ -49,8 +50,8 @@ export default function FavoritesPage() {
 
       <section className="space-y-4">
         {favoriteApartments.map((apartment) => (
-          <div
-            key={apartment.id}
+          <Link 
+          href={`/apartments/${apartment.id}`} key={apartment.id}        
             className="
               relative
               flex gap-4
@@ -113,7 +114,7 @@ export default function FavoritesPage() {
             >
               <Heart className="h-5 w-5 text-main fill-main" />
             </button>
-          </div>
+          </Link>
         ))}
       </section>
     </main>
