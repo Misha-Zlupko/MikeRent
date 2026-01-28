@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@radix-ui/react-popover": "^1.1.15",
+    "@react-google-maps/api": "^2.20.8",
+    "@vis.gl/react-google-maps": "^1.7.1",
     "lucide-react": "^0.561.0",
     "next": "16.0.10",
     "react": "19.2.1",

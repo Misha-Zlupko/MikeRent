@@ -20,7 +20,6 @@ type Props = {
 export const ApartmentGallery = ({ id }: Props) => {
   const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);  
 
 
@@ -41,9 +40,7 @@ export const ApartmentGallery = ({ id }: Props) => {
   }, [id]);
 
   // Функция для переключения избранного
-  const toggleFavorite = () => {
-    setIsLoading(true);
-    
+  const toggleFavorite = () => {    
     try {
       const favorites = localStorage.getItem("favorites");
       let favoritesArray: string[] = [];
@@ -65,9 +62,7 @@ export const ApartmentGallery = ({ id }: Props) => {
       }
     } catch (error) {
       console.error("Ошибка при работе с избранным:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
 
   const shareLink = async () => {

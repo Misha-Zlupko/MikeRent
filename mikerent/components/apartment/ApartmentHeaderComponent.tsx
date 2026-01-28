@@ -12,7 +12,7 @@ export const ApartmentHeader = ({ id }: Props) => {
     <div className="mb-6">
       <h1 className="text-2xl sm:text-3xl font-bold">{current?.title}</h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
-        <Link href={"ссылка на геолокацию добавить её в базу данных"} className="underline underline-offset-2">
+        <Link href={current?.mapUrl || ""} target="_blank" className="underline underline-offset-2">
           {current?.address}
         </Link>
       </div>

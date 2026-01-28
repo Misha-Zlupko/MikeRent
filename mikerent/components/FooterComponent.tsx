@@ -26,7 +26,7 @@ export const FooterComponent = () => {
                 "
               >
                 <Phone className="h-4 w-4" />
-                <span className="text-sm font-medium">+38 (0XX) XXX-XX-XX</span>
+                <span className="text-sm font-medium">+38 (063) 661-96-21</span>
               </Link>
             </div>
 
@@ -49,7 +49,7 @@ export const FooterComponent = () => {
             {/* TIKTOK */}
             <div className="mr-auto">
               <Link
-                href="https://www.tiktok.com/@your_tiktok"
+                href="https://www.tiktok.com/@mykhailo_29"
                 target="_blank"
                 className="
                   inline-flex items-center gap-2
