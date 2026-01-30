@@ -45,8 +45,7 @@ export type Apartment = {
   description: string;
 
   mapUrl: string;
-  amenities: Amenity[]; 
-
+  amenities: string[];
 
   availability: ApartmentAvailability;
 };
