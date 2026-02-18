@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import { apartments } from "@/data/ApartmentsData";
 import { BookingPopup } from "./BookingPopup";
 import { SeasonDatePicker } from "../calendar/SeasonDatePickerComponent";
 import { 
@@ -15,11 +14,20 @@ import {
 } from "lucide-react";
 
 type Props = {
-  id: string;
+  apartment: {
+    id: string;
+    title: string;
+    pricePerNight: number;
+    rating: number;
+    reviewsCount: number;
+    guests: number;
+    availability: {
+      booked: { from: string; to: string }[];
+    };
+  };
 };
 
-export const ApartmentBookingCard = ({ id }: Props) => {
-  const current = apartments.find((el) => el.id === id);
+export const ApartmentBookingCard = ({ apartment }: Props) => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [dateError, setDateError] = useState("");
@@ -29,20 +37,16 @@ export const ApartmentBookingCard = ({ id }: Props) => {
   const [checkOut, setCheckOut] = useState("");
   const [guestCount, setGuestCount] = useState(1);
 
-  if (!current) {
-    return null;
-  }
-
   const calculateTotal = () => {
     if (!checkIn || !checkOut) {
-      return current.pricePerNight * 3;
+      return apartment.pricePerNight * 3;
     }
     
     const startDate = new Date(checkIn);
     const endDate = new Date(checkOut);
     const nights = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    return current.pricePerNight * (nights > 0 ? nights : 3);
+    return apartment.pricePerNight * (nights > 0 ? nights : 3);
   };
 
   const handleDatesSelected = (newCheckIn: string, newCheckOut: string) => {
@@ -84,7 +88,7 @@ export const ApartmentBookingCard = ({ id }: Props) => {
     }
     
     // Проверяем забронированные даты
-    for (const booking of current.availability.booked) {
+    for (const booking of apartment.availability.booked) {
       const bookedStart = new Date(booking.from);
       const bookedEnd = new Date(booking.to);
       
@@ -129,16 +133,18 @@ export const ApartmentBookingCard = ({ id }: Props) => {
         <div className="flex items-end justify-between mb-6">
           <div>
             <span className="text-2xl font-bold">
-              {current.pricePerNight} ₴
+              {apartment.pricePerNight} ₴
             </span>
             <span className="text-sm text-gray-500"> / ніч</span>
           </div>
 
           <div className="flex items-center gap-1 text-sm text-gray-600">
             <span className="text-yellow-500">★</span>
-            <span className="font-medium text-gray-900">{current.rating}</span>
+            <span className="font-medium text-gray-900">{apartment.rating}</span>
             <span>·</span>
-            <span className="underline cursor-pointer">{current.reviewsCount} відгуків</span>
+            <span className="underline cursor-pointer">
+              {apartment.reviewsCount} відгуків
+            </span>
           </div>
         </div>
 
@@ -247,7 +253,9 @@ export const ApartmentBookingCard = ({ id }: Props) => {
           {/* Мини-информация о сезоне */}
           <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
             <span>Червень - Вересень 2026</span>
-            <span>{current.availability.booked.length} заброньованих періодів</span>
+            <span>
+              {apartment.availability.booked.length} заброньованих періодів
+            </span>
           </div>
         </div>
 
@@ -258,7 +266,9 @@ export const ApartmentBookingCard = ({ id }: Props) => {
               <Users className="w-5 h-5 text-blue-600" />
               <span className="font-semibold text-gray-900">Гості</span>
             </div>
-            <span className="text-xs text-gray-500">Максимум: {current.guests}</span>
+            <span className="text-xs text-gray-500">
+              Максимум: {apartment.guests}
+            </span>
           </div>
           
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
@@ -299,8 +309,10 @@ export const ApartmentBookingCard = ({ id }: Props) => {
               </span>
               
               <button
-                onClick={() => setGuestCount(prev => Math.min(current.guests, prev + 1))}
-                disabled={guestCount >= current.guests}
+                onClick={() =>
+                  setGuestCount((prev) => Math.min(apartment.guests, prev + 1))
+                }
+                disabled={guestCount >= apartment.guests}
                 className="
                   w-10 h-10 
                   rounded-full 
@@ -346,7 +358,8 @@ export const ApartmentBookingCard = ({ id }: Props) => {
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-gray-600">
-                  {current.pricePerNight} ₴ × {nights} {nights === 1 ? "ніч" : nights < 5 ? "ночі" : "ночей"}
+                  {apartment.pricePerNight} ₴ × {nights}{" "}
+                  {nights === 1 ? "ніч" : nights < 5 ? "ночі" : "ночей"}
                 </span>
                 <p className="text-xs text-gray-500 mt-1">
                   {checkIn && checkOut ? (
@@ -356,7 +369,9 @@ export const ApartmentBookingCard = ({ id }: Props) => {
                   ) : "Оберіть дати для точного розрахунку"}
                 </p>
               </div>
-              <span className="font-medium text-lg">{current.pricePerNight * nights} ₴</span>
+              <span className="font-medium text-lg">
+                {apartment.pricePerNight * nights} ₴
+              </span>
             </div>
             
             <div className="flex justify-between items-center text-green-600">
@@ -425,7 +440,7 @@ export const ApartmentBookingCard = ({ id }: Props) => {
         <SeasonDatePicker
           isOpen={isDatePickerOpen}
           onClose={() => setIsDatePickerOpen(false)}
-          bookedDates={current.availability.booked}
+          bookedDates={apartment.availability.booked}
           onDatesSelected={handleDatesSelected}
           currentCheckIn={checkIn}
           currentCheckOut={checkOut}
@@ -437,9 +452,9 @@ export const ApartmentBookingCard = ({ id }: Props) => {
         <BookingPopup
           isOpen={isBookingOpen}
           onClose={() => setIsBookingOpen(false)}
-          apartmentId={current.id}
-          apartmentTitle={current.title}
-          pricePerNight={current.pricePerNight}
+          apartmentId={apartment.id}
+          apartmentTitle={apartment.title}
+          pricePerNight={apartment.pricePerNight}
           guests={guestCount}
           checkIn={checkIn}
           checkOut={checkOut}

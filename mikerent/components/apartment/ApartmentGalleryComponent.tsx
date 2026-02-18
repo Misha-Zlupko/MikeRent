@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { apartments } from "@/data/ApartmentsData";
 import { Heart, Share2, Maximize2 } from "lucide-react";
 
 import "swiper/css";
@@ -14,10 +13,14 @@ import "swiper/css/thumbs";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 
 type Props = {
-  id: string;
+  apartment: {
+    id: string;
+    title: string;
+    images: string[];
+  };
 };
 
-export const ApartmentGallery = ({ id }: Props) => {
+export const ApartmentGallery = ({ apartment }: Props) => {
   const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [copied, setCopied] = useState(false);  
@@ -29,7 +32,7 @@ export const ApartmentGallery = ({ id }: Props) => {
         const favorites = localStorage.getItem("favorites");
         if (favorites) {
           const favoritesArray = JSON.parse(favorites);
-          setIsFavorite(favoritesArray.includes(id));
+          setIsFavorite(favoritesArray.includes(apartment.id));
         }
       } catch (error) {
         console.error("Ошибка при проверке избранного:", error);
@@ -37,7 +40,7 @@ export const ApartmentGallery = ({ id }: Props) => {
     };
     
     checkFavorite();
-  }, [id]);
+  }, [apartment.id]);
 
   // Функция для переключения избранного
   const toggleFavorite = () => {    
@@ -51,12 +54,14 @@ export const ApartmentGallery = ({ id }: Props) => {
       
       if (isFavorite) {
         // Удаляем из избранного
-        const updatedFavorites = favoritesArray.filter(favId => favId !== id);
+        const updatedFavorites = favoritesArray.filter(
+          (favId) => favId !== apartment.id
+        );
         localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
         setIsFavorite(false);
       } else {
         // Добавляем в избранное
-        favoritesArray.push(id);
+        favoritesArray.push(apartment.id);
         localStorage.setItem("favorites", JSON.stringify(favoritesArray));
         setIsFavorite(true);
       }
@@ -77,9 +82,6 @@ export const ApartmentGallery = ({ id }: Props) => {
     }
   };
   
-
-  // 🔎 Находим квартиру по id
-  const apartment = apartments.find((apt) => apt.id === id);
 
   // 🛑 Если не найдено или нет изображений — не рендерим
   if (!apartment || apartment.images.length === 0) {

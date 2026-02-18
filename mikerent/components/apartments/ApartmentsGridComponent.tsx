@@ -16,8 +16,6 @@ export const ApartmentsGrid = ({ apartments, guests, dateRange }: Props) => {
   const [typeFilter, setTypeFilter] = useState<ApartmentType | null>(null);
   const [itemsPerLoad, setItemsPerLoad] = useState(8);
   const [visibleCount, setVisibleCount] = useState(8);
-  console.log(guests);
-  console.log(dateRange);
 
   useEffect(() => {
     const updateLimit = () => {

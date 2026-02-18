@@ -1,11 +1,15 @@
 "use client";
 
-import { apartments } from "@/data/ApartmentsData";
 import Link from "next/link";
 
-export const ApartmentMapComponent = ({ id }: { id: string }) => {
-  const apartment = apartments.find((el) => el.id === id);
-  
+type Props = {
+  apartment: {
+    address: string;
+    mapUrl: string | null;
+  };
+};
+
+export const ApartmentMapComponent = ({ apartment }: Props) => {
   if (!apartment?.address) {
     return null;
   }

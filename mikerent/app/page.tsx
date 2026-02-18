@@ -1,54 +1,43 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import type { Apartment, DateRangeISO } from "@/data/ApartmentsTypes";
+import { HomeClient } from "@/components/HomeClient";
 
-import { SearchForm } from "@/components/search/SearchFormComponent";
-import { ApartmentsGrid } from "@/components/apartments/ApartmentsGridComponent";
-import { apartments } from "@/data/ApartmentsData";
-import { CustomerComments } from "@/components/СustomerСommentsComponent";
-import { useState } from "react";
-
-type DateRange = {
-  from: Date | null;
-  to: Date | null;
-};
-
-export default function Home() {
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: null,
-    to: null,
+async function getApartments(): Promise<Apartment[]> {
+  const dbApartments = await prisma.apartment.findMany({
+    include: { bookings: true },
   });
-  const [adults, setAdults] = useState(1);
-  const [childrenCount, setChildrenCount] = useState(0);
 
-  const handleSearch = (params: {
-    dateRange: DateRange;
-    adults: number;
-    childrenCount: number;
-  }) => {
-    setDateRange(params.dateRange);
-    setAdults(params.adults);
-    setChildrenCount(params.childrenCount);
-  };
+  return dbApartments.map((a) => ({
+    id: a.id,
+    title: a.title,
+    type: a.type.toLowerCase() as Apartment["type"],
+    city: a.city,
+    address: a.address,
+    pricePerNight: a.pricePerNight,
+    guests: a.guests,
+    bedrooms: a.bedrooms,
+    beds: a.beds,
+    bathrooms: a.bathrooms,
+    images: a.images,
+    rating: a.rating,
+    reviewsCount: a.reviewsCount,
+    description: a.description,
+    mapUrl: a.mapUrl,
+    amenities: a.amenities,
+    availability: {
+      season: {
+        from: a.seasonFrom.toISOString().slice(0, 10),
+        to: a.seasonTo.toISOString().slice(0, 10),
+      } as DateRangeISO,
+      booked: a.bookings.map((b) => ({
+        from: b.dateFrom.toISOString().slice(0, 10),
+        to: b.dateTo.toISOString().slice(0, 10),
+      })),
+    },
+  }));
+}
 
-  return (
-    <main>
-      <section className="mt-8 mb-8 container">
-        <SearchForm
-          dateRange={dateRange}
-          adults={adults}
-          childrenCount={childrenCount}
-          onSearch={handleSearch}
-        />
-      </section>
-      <section className="container mb-8">
-        <ApartmentsGrid
-          apartments={apartments}
-          dateRange={dateRange}
-          guests={adults + childrenCount}
-        />
-      </section>
-      <section className="inset-0 bg-gradient-to-br from-indigo-50 via-white to-pink-50">
-        <CustomerComments />
-      </section>
-    </main>
-  );
+export default async function Home() {
+  const apartments = await getApartments();
+  return <HomeClient apartments={apartments} />;
 }

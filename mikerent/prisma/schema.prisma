@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApartmentType {
+  APARTMENT
+  HOUSE
+  ROOM
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Apartment {
+  id            String        @id @default(cuid())
+  title         String
+  type          ApartmentType
+
+  city          String
+  address       String
+
+  pricePerNight Int
+
+  guests        Int
+  bedrooms      Int
+  beds          Int
+  bathrooms     Int
+
+  images        String[]      // /photo/apart1.jpg и т.п.
+
+  rating        Float
+  reviewsCount  Int
+
+  description   String
+  mapUrl        String
+
+  amenities     String[]      // список строк (Wi‑Fi, Кондиціонер и т.д.)
+
+  // Сезон доступности
+  seasonFrom    DateTime
+  seasonTo      DateTime
+
+  // Бронирования (занятые даты) — соответствуют твоему availability.booked
+  bookings      Booking[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Соответствует booked[] внутри availability
+model Booking {
+  id          String    @id @default(cuid())
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  apartmentId String
+
+  dateFrom    DateTime
+  dateTo      DateTime
+
+  // Поля на будущее под реальное бронирование
+  guestName   String?
+  guests      Int?
+  phone       String?
+
+  createdAt   DateTime  @default(now())
+  status      BookingStatus @default(PENDING)
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+// Отзывы на главной — по твоему Comment из CommentsDataTypes.ts
+model Testimonial {
+  id      String   @id @default(cuid())
+  name    String
+  text    String
+  avatar  String
+  date    DateTime // можно хранить как дату, даже если сейчас у тебя строка
+
+  createdAt DateTime @default(now())
+}

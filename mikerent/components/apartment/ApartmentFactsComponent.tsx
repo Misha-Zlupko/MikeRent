@@ -1,15 +1,11 @@
-import { apartments } from "@/data/ApartmentsData";
-
 type Props = {
-  id: string;
+  guests: number;
+  bedrooms: number;
+  beds: number;
+  bathrooms: number;
 };
 
-function pluralize(
-  count: number,
-  one: string,
-  few: string,
-  many: string
-) {
+function pluralize(count: number, one: string, few: string, many: string) {
   const mod10 = count % 10;
   const mod100 = count % 100;
 
@@ -19,31 +15,28 @@ function pluralize(
   return many;
 }
 
-export const ApartmentFacts = ({ id }: Props) => {
-  const current = apartments.find((el) => el.id === id);
-
-  if (!current) return null;
-
+export const ApartmentFacts = ({
+  guests,
+  bedrooms,
+  beds,
+  bathrooms,
+}: Props) => {
   return (
     <div className="flex flex-wrap gap-2 text-sm text-gray-700">
       <span className="px-3 py-1 rounded-full bg-gray-100">
-        До {current.guests}{" "}
-        {pluralize(current.guests, "гостя", "гостей", "гостей")}
+        До {guests} {pluralize(guests, "гостя", "гостей", "гостей")}
       </span>
 
       <span className="px-3 py-1 rounded-full bg-gray-100">
-        {current.bedrooms}{" "}
-        {pluralize(current.bedrooms, "спальня", "спальні", "спалень")}
+        {bedrooms} {pluralize(bedrooms, "спальня", "спальні", "спалень")}
       </span>
 
       <span className="px-3 py-1 rounded-full bg-gray-100">
-        {current.beds}{" "}
-        {pluralize(current.beds, "ліжко", "ліжка", "ліжок")}
+        {beds} {pluralize(beds, "ліжко", "ліжка", "ліжок")}
       </span>
 
       <span className="px-3 py-1 rounded-full bg-gray-100">
-        {current.bathrooms}{" "}
-        {pluralize(current.bathrooms, "ванна", "ванни", "ванн")}
+        {bathrooms} {pluralize(bathrooms, "ванна", "ванни", "ванн")}
       </span>
     </div>
   );

@@ -1,15 +1,17 @@
 "use client";
 
-import { apartments } from "@/data/ApartmentsData";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import type { Apartment } from "@prisma/client";
 
 const FAVORITES_KEY = "favorites";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const stored = localStorage.getItem(FAVORITES_KEY);
@@ -23,20 +25,43 @@ export default function FavoritesPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/apartments");
+        if (!res.ok) return;
+        const data = (await res.json()) as Apartment[];
+        setApartments(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
   const removeFavorite = (id: string, e?: React.MouseEvent) => {
     if (e) {
-      e.stopPropagation(); // Останавливаем всплытие события
-      e.preventDefault(); // Предотвращаем действие по умолчанию
+      e.stopPropagation();
+      e.preventDefault();
     }
-    
+
     const updated = favorites.filter((favId) => favId !== id);
     setFavorites(updated);
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
   };
 
   const favoriteApartments = apartments.filter((apartment) =>
-    favorites.includes(apartment.id)
+    favorites.includes(apartment.id),
   );
+
+  if (loading) {
+    return (
+      <main className="container py-16 text-center">
+        <p className="text-gray-500">Завантаження обраних квартир...</p>
+      </main>
+    );
+  }
 
   if (favoriteApartments.length === 0) {
     return (
@@ -55,8 +80,8 @@ export default function FavoritesPage() {
 
       <section className="space-y-4">
         {favoriteApartments.map((apartment) => (
-          <div 
-            key={apartment.id}        
+          <div
+            key={apartment.id}
             className="
               relative
               flex gap-4
@@ -69,7 +94,7 @@ export default function FavoritesPage() {
               hover:shadow-md
             "
           >
-            <Link 
+            <Link
               href={`/apartments/${apartment.id}`}
               className="flex gap-4 flex-1"
             >
@@ -83,7 +108,9 @@ export default function FavoritesPage() {
               </div>
               <div className="flex flex-1 flex-col justify-between">
                 <div>
-                  <h3 className="font-medium text-gray-900">{apartment.title}</h3>
+                  <h3 className="font-medium text-gray-900">
+                    {apartment.title}
+                  </h3>
                   <p className="mt-1 text-sm text-gray-500">
                     {apartment.city} · {apartment.address}
                   </p>
@@ -96,11 +123,13 @@ export default function FavoritesPage() {
 
                 <div className="mt-2 font-semibold text-gray-900">
                   {apartment.pricePerNight} ₴{" "}
-                  <span className="text-sm font-normal text-gray-500">/ ніч</span>
+                  <span className="text-sm font-normal text-gray-500">
+                    / ніч
+                  </span>
                 </div>
               </div>
             </Link>
-            
+
             <button
               onClick={(e) => removeFavorite(apartment.id, e)}
               aria-label="Видалити з обраних"
