@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import type { Apartment, DateRangeISO } from "@/data/ApartmentsTypes";
 import { HomeClient } from "@/components/HomeClient";
