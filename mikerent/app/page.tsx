@@ -26,12 +26,10 @@ async function getApartments(): Promise<Apartment[]> {
     amenities: a.amenities,
     availability: {
       season: {
-        // 👇 ВИПРАВЛЕНО: додано перевірку через ?.
-        from: a.seasonFrom?.toISOString().slice(0, 10) || "",
-        to: a.seasonTo?.toISOString().slice(0, 10) || "",
+        from: (a as any).seasonFrom?.toISOString().slice(0, 10) || "",
+        to: (a as any).seasonTo?.toISOString().slice(0, 10) || "",
       } as DateRangeISO,
       booked: a.bookings.map((b) => ({
-        // 👇 ВИПРАВЛЕНО: додано перевірку через ?.
         from: b.dateFrom?.toISOString().slice(0, 10) || "",
         to: b.dateTo?.toISOString().slice(0, 10) || "",
       })),

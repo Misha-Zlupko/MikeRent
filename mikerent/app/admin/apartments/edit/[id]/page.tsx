@@ -25,13 +25,12 @@ export default async function EditApartmentPage({ params }: PageProps) {
   // Перетворюємо дати в рядки для форми
   const apartmentWithStrings = {
     ...apartment,
-    seasonFrom: apartment.seasonFrom?.toISOString().slice(0, 10) || "",
-    seasonTo: apartment.seasonTo?.toISOString().slice(0, 10) || "",
+    seasonFrom: (apartment as any).seasonFrom?.toISOString().slice(0, 10) || "",
+    seasonTo: (apartment as any).seasonTo?.toISOString().slice(0, 10) || "",
     bookings: apartment.bookings.map((b) => ({
       from: b.dateFrom.toISOString().slice(0, 10),
       to: b.dateTo.toISOString().slice(0, 10),
     })),
   };
-
   return <EditApartmentForm apartment={apartmentWithStrings} />;
 }

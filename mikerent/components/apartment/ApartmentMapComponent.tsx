@@ -17,7 +17,7 @@ export const ApartmentMapComponent = ({ apartment }: Props) => {
   const getEmbedUrl = () => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
     const address = encodeURIComponent(apartment.address);
-    
+
     if (apiKey) {
       return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${address}&zoom=15`;
     } else {
@@ -31,7 +31,7 @@ export const ApartmentMapComponent = ({ apartment }: Props) => {
         <h3 className="font-semibold mb-1">Розташування</h3>
         <p className="text-gray-600 text-sm">{apartment.address}</p>
       </div>
-      
+
       <div className="h-80">
         <iframe
           src={getEmbedUrl()}
@@ -45,15 +45,27 @@ export const ApartmentMapComponent = ({ apartment }: Props) => {
           title={`Карта: ${apartment.address}`}
         />
       </div>
-      
-      <div className="p-4 bg-gray-50 border-t border-gray-200">
-        <Link href={apartment.mapUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1">
-          Відкрити в Google Maps
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </Link>
-      </div>
+
+      {/* 👇 ДОДАЄМО ПЕРЕВІРКУ */}
+      {apartment.mapUrl && (
+        <div className="p-4 bg-gray-50 border-t border-gray-200">
+          <Link
+            href={apartment.mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1"
+          >
+            Відкрити в Google Maps
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

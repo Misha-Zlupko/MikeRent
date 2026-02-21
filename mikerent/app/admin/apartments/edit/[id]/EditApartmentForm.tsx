@@ -28,6 +28,8 @@ type ApartmentData = {
   seasonFrom: string;
   seasonTo: string;
   bookings: BookedPeriod[];
+  rating: number;
+  reviewsCount: number;
 };
 
 export default function EditApartmentForm({
