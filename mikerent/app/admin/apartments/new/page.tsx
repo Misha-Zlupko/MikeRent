@@ -1,86 +1,110 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Link as LinkIcon, X, Calendar, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Home,
+  User,
+  Phone,
+  DollarSign,
+  MessageCircle,
+  Users,
+} from "lucide-react";
 
-// Тип для періоду бронювання
-type BookedPeriod = {
-  from: string;
-  to: string;
+type Apartment = {
+  id: string;
+  title: string;
+  city: string;
+  pricePerNight: number;
 };
 
-export default function NewApartmentPage() {
+export default function NewBookingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const [amenities, setAmenities] = useState<string[]>([]);
-  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [selectedApartment, setSelectedApartment] = useState<Apartment | null>(
+    null,
+  );
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestCount, setGuestCount] = useState(1);
+  const [guestContact, setGuestContact] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
 
-  // Стан для заброньованих дат
-  const [bookedPeriods, setBookedPeriods] = useState<BookedPeriod[]>([]);
+  // Стан для передоплати
+  const [prepaidTo, setPrepaidTo] = useState<"me" | "owner">("me");
 
-  // 👇 ДЕФОЛТНИЙ СЕЗОН: червень - вересень поточного року
-  const currentYear = new Date().getFullYear();
-  const [seasonFrom, setSeasonFrom] = useState(`${currentYear}-06-01`);
-  const [seasonTo, setSeasonTo] = useState(`${currentYear}-09-30`);
+  // Фінансові показники в гривнях
+  const [ownerPricePerNight, setOwnerPricePerNight] = useState(0); // грн/ніч
+  const [markupPerNight, setMarkupPerNight] = useState(0); // грн/ніч (мій прибуток)
+  const [paidAmount, setPaidAmount] = useState(0); // грн (передоплата)
+
+  // Завантажуємо список квартир
+  useEffect(() => {
+    fetch("/api/admin/apartments")
+      .then((res) => res.json())
+      .then((data) => setApartments(data));
+  }, []);
+
+  // Розрахунок кількості ночей
+  const nights =
+    dateFrom && dateTo
+      ? Math.ceil(
+          Math.abs(new Date(dateTo).getTime() - new Date(dateFrom).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+      : 0;
+
+  // Фінансові розрахунки в гривнях
+  const ownerTotalPrice = ownerPricePerNight * nights;
+  const clientTotal = (ownerPricePerNight + markupPerNight) * nights;
+  const ourProfit = markupPerNight * nights;
+  const remainingToPay = clientTotal - paidAmount;
+
+  // При виборі квартири встановлюємо початкову ціну
+  useEffect(() => {
+    if (selectedApartment && nights > 0 && ownerPricePerNight === 0) {
+      const basePrice = selectedApartment.pricePerNight * 42;
+      setOwnerPricePerNight(basePrice);
+      setMarkupPerNight(Math.round(basePrice * 0.2));
+    }
+  }, [selectedApartment, nights, ownerPricePerNight]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-
     const data = {
-      title: formData.get("title"),
-      type: formData.get("type")?.toString().toUpperCase(),
-      city: formData.get("city"),
-      address: formData.get("address"),
-      pricePerNight: Number(formData.get("pricePerNight")),
-      guests: Number(formData.get("guests")),
-      bedrooms: Number(formData.get("bedrooms")),
-      beds: Number(formData.get("beds")),
-      bathrooms: Number(formData.get("bathrooms")),
-      description: formData.get("description"),
-      images: images,
-      amenities: amenities,
-      mapUrl: formData.get("mapUrl"),
-
-      // 👇 Сезон (вже має значення завдяки дефолтному useState)
-      seasonFrom: seasonFrom ? new Date(seasonFrom) : null,
-      seasonTo: seasonTo ? new Date(seasonTo) : null,
-
-      rating: 0,
-      reviewsCount: 0,
+      apartmentId: selectedApartment?.id,
+      dateFrom,
+      dateTo,
+      guestName,
+      guestPhone,
+      guestCount,
+      guestContact,
+      totalAmount: clientTotal,
+      ownerPayout: ownerTotalPrice,
+      ourProfit,
+      prepaidUAH: paidAmount,
+      prepaidTo,
+      ownerPhone,
+      status: "CONFIRMED",
     };
 
     try {
-      const res = await fetch("/api/admin/apartments", {
+      const res = await fetch("/api/admin/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (res.ok) {
-        const apartment = await res.json();
-
-        // Створюємо бронювання для кожного періоду
-        for (const period of bookedPeriods) {
-          if (period.from && period.to) {
-            await fetch("/api/admin/bookings", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                apartmentId: apartment.id,
-                dateFrom: period.from,
-                dateTo: period.to,
-              }),
-            });
-          }
-        }
-
-        router.push("/admin/apartments");
+        router.push("/admin/bookings");
         router.refresh();
       } else {
         const error = await res.json();
@@ -93,54 +117,6 @@ export default function NewApartmentPage() {
     }
   }
 
-  // Додати посилання на фото
-  const addImageUrl = () => {
-    if (imageUrlInput.trim() && !images.includes(imageUrlInput.trim())) {
-      setImages([...images, imageUrlInput.trim()]);
-      setImageUrlInput("");
-    }
-  };
-
-  // Видалити посилання
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, idx) => idx !== index));
-  };
-
-  // Додати новий період бронювання
-  const addBookedPeriod = () => {
-    setBookedPeriods([...bookedPeriods, { from: "", to: "" }]);
-  };
-
-  // Оновити період бронювання
-  const updateBookedPeriod = (
-    index: number,
-    field: "from" | "to",
-    value: string,
-  ) => {
-    const updated = [...bookedPeriods];
-    updated[index][field] = value;
-    setBookedPeriods(updated);
-  };
-
-  // Видалити період бронювання
-  const removeBookedPeriod = (index: number) => {
-    setBookedPeriods(bookedPeriods.filter((_, i) => i !== index));
-  };
-
-  // Список доступних зручностей
-  const amenitiesList = [
-    { id: "wifi", label: "WiFi" },
-    { id: "airConditioner", label: "Кондиціонер" },
-    { id: "kitchen", label: "Кухня" },
-    { id: "dishes", label: "Посуд" },
-    { id: "washingMachine", label: "Пральна машина" },
-    { id: "tv", label: "Телевізор" },
-    { id: "parking", label: "Парковка" },
-    { id: "balcony", label: "Балкон" },
-    { id: "seaView", label: "Вид на море" },
-    { id: "pool", label: "Басейн" },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm">
@@ -148,12 +124,12 @@ export default function NewApartmentPage() {
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">
               <Link
-                href="/admin/dashboard"
+                href="/admin/bookings"
                 className="text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft size={20} />
               </Link>
-              <h1 className="text-xl font-bold">Додати нову квартиру</h1>
+              <h1 className="text-xl font-bold">Нове бронювання</h1>
             </div>
           </div>
         </div>
@@ -161,336 +137,363 @@ export default function NewApartmentPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Основна інформація */}
+          {/* Вибір квартири */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Основна інформація</h2>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Home size={20} className="text-blue-600" />
+              Квартира
+            </h2>
+
+            <select
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              value={selectedApartment?.id || ""}
+              onChange={(e) => {
+                const apt = apartments.find((a) => a.id === e.target.value);
+                setSelectedApartment(apt || null);
+                // Скидаємо ціни при зміні квартири
+                setOwnerPricePerNight(0);
+                setMarkupPerNight(0);
+              }}
+              required
+            >
+              <option value="">Виберіть квартиру</option>
+              {apartments.map((apt) => (
+                <option key={apt.id} value={apt.id}>
+                  {apt.title} ({apt.city}) -{" "}
+                  {(apt.pricePerNight * 42).toFixed(0)} грн/ніч
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Дати бронювання */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Calendar size={20} className="text-blue-600" />
+              Дати
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Назва *
+                  Заїзд *
                 </label>
                 <input
-                  name="title"
-                  required
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder="Наприклад: Затишна квартира в центрі"
+                  required
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium mb-2">Тип *</label>
-                <select
-                  name="type"
-                  required
+                <label className="block text-sm font-medium mb-2">
+                  Виїзд *
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="apartment">Квартира</option>
-                  <option value="house">Будинок</option>
-                  <option value="room">Кімната</option>
-                </select>
+                  required
+                />
+              </div>
+            </div>
+
+            {nights > 0 && (
+              <p className="text-sm text-gray-600 mt-2">
+                {nights} {nights === 1 ? "ніч" : nights < 5 ? "ночі" : "ночей"}
+              </p>
+            )}
+          </div>
+
+          {/* Інформація про гостя */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <User size={20} className="text-blue-600" />
+              Інформація про гостя
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Ім'я *</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder="Олександр Петренко"
+                  required
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Місто *
+                  Телефон
                 </label>
                 <input
-                  name="city"
-                  required
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder="Львів"
+                  placeholder="+380 00 000 0000"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Адреса</label>
+                <label className="block text-sm font-medium mb-2">
+                  Кількість людей *
+                </label>
                 <input
-                  name="address"
+                  type="number"
+                  min="1"
+                  value={guestCount}
+                  onChange={(e) => setGuestCount(Number(e.target.value))}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder="вул. Коперника, 10"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <MessageCircle size={16} />
+                  Контакт (Telegram/Viber)
+                </label>
+                <input
+                  type="text"
+                  value={guestContact}
+                  onChange={(e) => setGuestContact(e.target.value)}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder="@username або номер"
                 />
               </div>
             </div>
           </div>
 
-          {/* Ціна та місткість */}
+          {/* Фінанси */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Ціна та місткість</h2>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <DollarSign size={20} className="text-blue-600" />
+              Фінанси (грн)
+            </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* Інформація про ціни */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-blue-600 mb-1">
+                  Ціна хазяїна за сутку
+                </p>
+                <p className="text-2xl font-bold text-blue-700">
+                  {ownerPricePerNight.toFixed(0)} грн
+                </p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-green-600 mb-1">
+                  Моя націнка за сутку
+                </p>
+                <p className="text-2xl font-bold text-green-700">
+                  {markupPerNight.toFixed(0)} грн
+                </p>
+              </div>
+            </div>
+
+            {/* Поля для введення цін */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Ціна/ніч *
+                  Ціна хазяїна за сутку (грн)
                 </label>
                 <input
-                  name="pricePerNight"
                   type="number"
-                  required
                   min="0"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Гостей</label>
-                <input
-                  name="guests"
-                  type="number"
-                  min="1"
-                  defaultValue="2"
+                  step="0.01"
+                  value={ownerPricePerNight}
+                  onChange={(e) =>
+                    setOwnerPricePerNight(Number(e.target.value))
+                  }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Спалень
+                  Моя націнка за сутку (грн)
                 </label>
                 <input
-                  name="bedrooms"
                   type="number"
-                  min="1"
-                  defaultValue="1"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Ліжок *
-                </label>
-                <input
-                  name="beds"
-                  type="number"
-                  required
-                  min="1"
-                  defaultValue="1"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Ванних</label>
-                <input
-                  name="bathrooms"
-                  type="number"
-                  min="1"
-                  defaultValue="1"
+                  min="0"
+                  step="0.01"
+                  value={markupPerNight}
+                  onChange={(e) => setMarkupPerNight(Number(e.target.value))}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Фото - через посилання */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Фотографії</h2>
+            {/* Детальний розрахунок */}
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">
+                  Хазяїну за {nights} ночей:
+                </span>
+                <span className="font-semibold">
+                  {ownerTotalPrice.toFixed(0)} грн
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">
+                  Моя націнка за {nights} ночей:
+                </span>
+                <span className="font-semibold text-green-600">
+                  {(markupPerNight * nights).toFixed(0)} грн
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-blue-100 rounded-lg">
+                <span className="font-medium text-blue-800">
+                  ЗАГАЛЬНА СУМА ДО СПЛАТИ:
+                </span>
+                <span className="text-2xl font-bold text-blue-800">
+                  {clientTotal.toFixed(0)} грн
+                </span>
+              </div>
+            </div>
 
-            <div className="space-y-4">
-              {/* Поле для введення посилання */}
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={imageUrlInput}
-                  onChange={(e) => setImageUrlInput(e.target.value)}
-                  placeholder="Вставте посилання на фото (https://...)"
-                  className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={addImageUrl}
-                  disabled={!imageUrlInput.trim()}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <LinkIcon size={20} />
-                  Додати
-                </button>
+            {/* Передоплата */}
+            {/* Передоплата */}
+            <div className="border-t pt-6">
+              <h3 className="font-medium text-lg mb-4">Оплата від клієнта</h3>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3">
+                  Передоплату отримує:
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setPrepaidTo("me")}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      prepaidTo === "me"
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <User size={20} />
+                      <span className="font-medium">Я</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrepaidTo("owner")}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      prepaidTo === "owner"
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Home size={20} />
+                      <span className="font-medium">Хазяїн</span>
+                    </div>
+                  </button>
+                </div>
               </div>
 
-              {/* Прев'ю доданих фото */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 gap-4 mt-4">
-                  {images.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={img}
-                        alt={`Фото ${i + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                        onError={(e) => {
-                          // Якщо фото не завантажилось
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder.jpg";
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
+              {/* Інформація про те, як змінюються суми */}
+              {paidAmount > 0 && (
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
+                  <p className="font-medium text-blue-700 mb-2">
+                    Розподіл передоплати:
+                  </p>
+                  {prepaidTo === "me" ? (
+                    <p className="text-blue-600">
+                      💰 {paidAmount.toFixed(0)} грн залишаються у вас. Хазяїн
+                      отримає {ownerTotalPrice.toFixed(0)} грн при заїзді.
+                    </p>
+                  ) : (
+                    <p className="text-blue-600">
+                      💰 {paidAmount.toFixed(0)} грн йдуть хазяїну. Ви отримаєте{" "}
+                      {(markupPerNight * nights).toFixed(0)} грн при заїзді.
+                    </p>
+                  )}
                 </div>
               )}
 
-              {images.length === 0 && (
-                <p className="text-gray-500 text-center py-8 border-2 border-dashed rounded-lg">
-                  Поки немає доданих фото. Вставте посилання вище.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Доступність та бронювання */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="text-blue-600" size={24} />
-              <h2 className="text-lg font-semibold">Доступність квартири</h2>
-            </div>
-
-            {/* Сезон */}
-            <div className="mb-6">
-              <h3 className="font-medium mb-3">
-                Сезон (період, коли квартира здається)
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Початок сезону
+                  <label className="block text-sm font-medium mb-2">
+                    Вже сплачено (грн)
                   </label>
                   <input
-                    type="date"
-                    value={seasonFrom}
-                    onChange={(e) => setSeasonFrom(e.target.value)}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={paidAmount}
+                    onChange={(e) => setPaidAmount(Number(e.target.value))}
                     className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Залишок до сплати (грн)
+                  </label>
+                  <div className="w-full p-2 bg-gray-100 border rounded text-gray-900 font-medium">
+                    {remainingToPay.toFixed(0)} грн
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Підсумок */}
+            <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Всього до сплати:</p>
+                  <p className="text-lg font-bold">
+                    {clientTotal.toFixed(0)} грн
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Кінець сезону
-                  </label>
-                  <input
-                    type="date"
-                    value={seasonTo}
-                    onChange={(e) => setSeasonTo(e.target.value)}
-                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  />
+                  <p className="text-sm text-gray-600">Вже сплачено:</p>
+                  <p className="text-lg font-bold text-green-600">
+                    {paidAmount.toFixed(0)} грн
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    ({prepaidTo === "me" ? "Мені" : "Хазяїну"})
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Хазяїн отримає:</p>
+                  <p className="text-lg font-bold">
+                    {prepaidTo === "me"
+                      ? ownerTotalPrice.toFixed(0)
+                      : Math.max(0, ownerTotalPrice - paidAmount).toFixed(
+                          0,
+                        )}{" "}
+                    грн
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Я отримаю:</p>
+                  <p className="text-lg font-bold text-green-600">
+                    {prepaidTo === "owner"
+                      ? (markupPerNight * nights).toFixed(0)
+                      : Math.max(
+                          0,
+                          markupPerNight * nights - paidAmount,
+                        ).toFixed(0)}{" "}
+                    грн
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* Заброньовані дати */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium">Заброньовані дати</h3>
-                <button
-                  type="button"
-                  onClick={addBookedPeriod}
-                  className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm"
-                >
-                  <Plus size={16} />
-                  Додати період
-                </button>
+              <div className="h-px bg-gray-300 my-3" />
+              <div className="flex justify-between items-center text-orange-600 font-bold">
+                <span>ЗАЛИШОК ДО СПЛАТИ:</span>
+                <span className="text-xl">{remainingToPay.toFixed(0)} грн</span>
               </div>
-
-              {bookedPeriods.length === 0 ? (
-                <p className="text-gray-500 text-center py-4 border border-dashed rounded">
-                  Немає заброньованих дат. Додайте періоди, коли квартира
-                  зайнята.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {bookedPeriods.map((period, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 bg-gray-50 p-3 rounded"
-                    >
-                      <input
-                        type="date"
-                        value={period.from}
-                        onChange={(e) =>
-                          updateBookedPeriod(index, "from", e.target.value)
-                        }
-                        className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                        placeholder="Початок"
-                      />
-                      <span className="text-gray-500">—</span>
-                      <input
-                        type="date"
-                        value={period.to}
-                        onChange={(e) =>
-                          updateBookedPeriod(index, "to", e.target.value)
-                        }
-                        className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                        placeholder="Кінець"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeBookedPeriod(index)}
-                        className="text-red-600 hover:text-red-700 p-2"
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-
-            {/* Підказка */}
-            <p className="text-xs text-gray-500 mt-4">
-              * Якщо сезон не вказано, квартира вважається доступною цілий рік.
-              Заброньовані дати будуть заблоковані для нових замовлень.
-            </p>
-          </div>
-
-          {/* Зручності */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Зручності</h2>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {amenitiesList.map((amenity) => (
-                <label key={amenity.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    value={amenity.id}
-                    checked={amenities.includes(amenity.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setAmenities([...amenities, amenity.id]);
-                      } else {
-                        setAmenities(amenities.filter((a) => a !== amenity.id));
-                      }
-                    }}
-                    className="rounded text-blue-600"
-                  />
-                  {amenity.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Опис */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Опис</h2>
-            <textarea
-              name="description"
-              rows={6}
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              placeholder="Детальний опис квартири..."
-            />
-          </div>
-
-          {/* Карта */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Google Maps URL</h2>
-            <input
-              name="mapUrl"
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              placeholder="https://maps.google.com/?q=..."
-            />
           </div>
 
           {/* Кнопки */}
@@ -498,14 +501,14 @@ export default function NewApartmentPage() {
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {loading ? "Збереження..." : "Створити квартиру"}
+              {loading ? "Збереження..." : "Створити бронювання"}
             </button>
 
             <Link
-              href="/admin/apartments"
-              className="bg-gray-500 text-white px-6 py-3 rounded hover:bg-gray-600"
+              href="/admin/bookings"
+              className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
             >
               Скасувати
             </Link>
