@@ -8,35 +8,32 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get("admin_token")?.value;
   const path = request.nextUrl.pathname;
 
-  // Створюємо відповідь
-  const response = NextResponse.next();
-
-  // Додаємо заголовки для заборони кешування для ВСІХ сторінок
-  response.headers.set("Cache-Control", "no-store, must-revalidate");
-  response.headers.set("Pragma", "no-cache");
-  response.headers.set("Expires", "0");
-
-  // Логіка авторизації для адмінки
-  const isAdminRoute = path.startsWith("/admin");
-  const isLoginPage = path === "/admin/login";
-
+  // Якщо це головна адмінки (/admin)
   if (path === "/admin") {
     if (token) {
       try {
         verify(token, JWT_SECRET);
+        // Якщо токен валідний - редірект на дашборд
         return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       } catch {
+        // Якщо токен невалідний - редірект на логін
         return NextResponse.redirect(new URL("/admin/login", request.url));
       }
     } else {
+      // Якщо немає токена - редірект на логін
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
+
+  // Захист інших адмін роутів (крім логіну)
+  const isAdminRoute = path.startsWith("/admin");
+  const isLoginPage = path === "/admin/login";
 
   if (isAdminRoute && !isLoginPage) {
     if (!token) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
+
     try {
       verify(token, JWT_SECRET);
     } catch {
@@ -44,6 +41,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // Якщо користувач вже залогінений і намагається зайти на логін
   if (isLoginPage && token) {
     try {
       verify(token, JWT_SECRET);
@@ -53,9 +51,9 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  matcher: "/admin/:path*",
 };

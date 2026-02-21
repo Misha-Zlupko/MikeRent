@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  output: "standalone",
+  experimental: {
+    isrFlushToDisk: false,
+  },
 };
 
 export default nextConfig;
