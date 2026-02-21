@@ -11,8 +11,12 @@ export default function DeleteButton({ id }: { id: string }) {
       const res = await fetch(`/api/admin/apartments/${id}`, {
         method: "DELETE",
       });
+
       if (res.ok) {
+        // Примусове оновлення з очищенням кешу
         router.refresh();
+        // Додатково перезавантажуємо дані
+        fetch("/api/admin/apartments", { cache: "no-store" });
       } else {
         alert("Помилка видалення");
       }
