@@ -1,8 +1,15 @@
-// components/apartment/BookingPopup.tsx
 "use client";
 
 import { useState } from "react";
-import { X, Loader2, CheckCircle, Phone, MessageSquare, Calendar, Users } from "lucide-react";
+import {
+  X,
+  Loader2,
+  CheckCircle,
+  Phone,
+  MessageSquare,
+  Calendar,
+  Users,
+} from "lucide-react";
 
 interface BookingPopupProps {
   isOpen: boolean;
@@ -37,7 +44,7 @@ export const BookingPopup = ({
   // Валидация украинского номера телефона
   const isValidUkrainianPhone = (phone: string): boolean => {
     const phoneRegex = /^(\+?38)?(0\d{9})$/;
-    const cleaned = phone.replace(/\s/g, '');
+    const cleaned = phone.replace(/\s/g, "");
     return phoneRegex.test(cleaned);
   };
 
@@ -52,10 +59,12 @@ export const BookingPopup = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
+
     // Валидация телефона
     if (!isValidUkrainianPhone(phone)) {
-      setError("Будь ласка, введіть коректний український номер телефону (наприклад: 0981234567 або +380981234567)");
+      setError(
+        "Будь ласка, введіть коректний український номер телефону (наприклад: 0981234567 або +380981234567)",
+      );
       return;
     }
 
@@ -67,159 +76,174 @@ export const BookingPopup = ({
 
       // Создаем объект бронирования
       const bookingData = {
-        phone: phone.replace(/\s/g, ''),
+        phone: phone.replace(/\s/g, ""),
         comment: comment || "Без коментаря",
         apartmentId,
         apartmentTitle,
         pricePerNight,
         guests,
         nights,
-        checkIn: new Date(checkIn).toLocaleDateString('uk-UA'),
-        checkOut: new Date(checkOut).toLocaleDateString('uk-UA'),
+        checkIn: new Date(checkIn).toLocaleDateString("uk-UA"),
+        checkOut: new Date(checkOut).toLocaleDateString("uk-UA"),
         totalPrice,
         bookingId: generatedBookingId,
         createdAt: new Date().toISOString(),
-        status: "pending"
+        status: "pending",
       };
 
-      console.log('📤 Отправка данных бронирования:', bookingData);
+      console.log("📤 Отправка данных бронирования:", bookingData);
 
       // Сохраняем в localStorage для истории
       try {
-        const existingBookings = JSON.parse(localStorage.getItem("apartmentBookings") || "[]");
+        const existingBookings = JSON.parse(
+          localStorage.getItem("apartmentBookings") || "[]",
+        );
         localStorage.setItem(
           "apartmentBookings",
-          JSON.stringify([...existingBookings, bookingData])
+          JSON.stringify([...existingBookings, bookingData]),
         );
-        console.log('✅ Сохранено в localStorage');
+        console.log("✅ Сохранено в localStorage");
       } catch (storageError) {
-        console.warn('⚠️ Ошибка сохранения в localStorage:', storageError);
+        console.warn("⚠️ Ошибка сохранения в localStorage:", storageError);
       }
 
       // СНАЧАЛА протестируем с debug endpoint
-      console.log('🔄 Тестируем подключение к API...');
-      
-      const testResponse = await fetch('/api/debug', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: true, phone: bookingData.phone })
+      console.log("🔄 Тестируем подключение к API...");
+
+      const testResponse = await fetch("/api/debug", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test: true, phone: bookingData.phone }),
       });
-      
+
       const testResult = await testResponse.json();
-      console.log('🔍 Тестовый ответ API:', testResult);
-      
+      console.log("🔍 Тестовый ответ API:", testResult);
+
       if (!testResponse.ok) {
         throw new Error(`Тестовый API не отвечает: ${testResponse.status}`);
       }
 
       // Теперь отправляем в реальный endpoint
-      console.log('🔄 Отправляем в Telegram API...');
-      const response = await fetch('/api/telegram/booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      console.log("🔄 Отправляем в Telegram API...");
+      const response = await fetch("/api/telegram/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),
       });
 
-      console.log('📥 Получен ответ:', {
+      console.log("📥 Получен ответ:", {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
       });
 
       let result;
       try {
         // Пробуем получить текст
         const responseText = await response.text();
-        console.log('📄 Текст ответа:', responseText);
-        
+        console.log("📄 Текст ответа:", responseText);
+
         if (responseText) {
           // Пробуем распарсить как JSON
           try {
             result = JSON.parse(responseText);
-            console.log('📊 JSON ответ:', result);
+            console.log("📊 JSON ответ:", result);
           } catch (jsonError) {
-            console.error('❌ Ошибка парсинга JSON:', jsonError);
-            console.error('❌ Сырой текст:', responseText);
-            
+            console.error("❌ Ошибка парсинга JSON:", jsonError);
+            console.error("❌ Сырой текст:", responseText);
+
             // Если не JSON, значит сервер вернул HTML страницу (например, 404)
-            if (responseText.includes('<!DOCTYPE')) {
-              throw new Error('Сервер вернул HTML вместо JSON. Возможно, неправильный URL API.');
+            if (responseText.includes("<!DOCTYPE")) {
+              throw new Error(
+                "Сервер вернул HTML вместо JSON. Возможно, неправильный URL API.",
+              );
             }
-            
-            throw new Error(`Некорректный ответ сервера: ${responseText.substring(0, 100)}...`);
+
+            throw new Error(
+              `Некорректный ответ сервера: ${responseText.substring(0, 100)}...`,
+            );
           }
         } else {
-          console.warn('⚠️ Пустой ответ от сервера');
+          console.warn("⚠️ Пустой ответ от сервера");
           result = {};
         }
       } catch (parseError: any) {
-        console.error('❌ Ошибка обработки ответа:', parseError);
-        throw new Error(`Ошибка обработки ответа сервера: ${parseError.message}`);
+        console.error("❌ Ошибка обработки ответа:", parseError);
+        throw new Error(
+          `Ошибка обработки ответа сервера: ${parseError.message}`,
+        );
       }
 
       // Проверяем статус ответа
       if (!response.ok) {
-        const errorMessage = result?.error || 
-                            result?.message || 
-                            result?.details ||
-                            `Ошибка сервера: ${response.status} ${response.statusText}`;
-        console.error('❌ Ошибка API:', errorMessage);
+        const errorMessage =
+          result?.error ||
+          result?.message ||
+          result?.details ||
+          `Ошибка сервера: ${response.status} ${response.statusText}`;
+        console.error("❌ Ошибка API:", errorMessage);
         throw new Error(errorMessage);
       }
 
       // Проверяем структуру успешного ответа
       if (!result.success && !result.bookingId) {
-        console.warn('⚠️ Неожиданная структура ответа:', result);
+        console.warn("⚠️ Неожиданная структура ответа:", result);
       }
 
-      console.log('✅ Заявка успешно отправлена!');
-      
+      console.log("✅ Заявка успешно отправлена!");
+
       // Показываем успех
       setIsSuccess(true);
       setBookingId(generatedBookingId);
-      
+
       // Сбрасываем форму
       setPhone("");
       setComment("");
-      
+
       // Автоматически закрываем через 8 секунд
       const closeTimer = setTimeout(() => {
         onClose();
         setIsSuccess(false);
         setBookingId("");
       }, 8000);
-      
+
       // Очищаем таймер при размонтировании
       return () => clearTimeout(closeTimer);
-      
     } catch (err: any) {
-      console.error('❌ Ошибка бронирования:', err);
-      
+      console.error("❌ Ошибка бронирования:", err);
+
       // Детализированные сообщения об ошибках
       let userErrorMessage = "Щось пішло не так. Спробуйте ще раз.";
-      
-      if (err.message.includes('404')) {
-        userErrorMessage = "API endpoint не найден. Пожалуйста, сообщите администратору.";
-      } else if (err.message.includes('500')) {
+
+      if (err.message.includes("404")) {
+        userErrorMessage =
+          "API endpoint не найден. Пожалуйста, сообщите администратору.";
+      } else if (err.message.includes("500")) {
         userErrorMessage = "Ошибка на сервере. Мы уже работаем над этим.";
-      } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
-        userErrorMessage = "Проблемы с интернет-соединением. Проверьте подключение к сети.";
-      } else if (err.message.includes('HTML вместо JSON')) {
-        userErrorMessage = "Конфигурационная ошибка сервера. Администратор уведомлен.";
+      } else if (
+        err.message.includes("NetworkError") ||
+        err.message.includes("Failed to fetch")
+      ) {
+        userErrorMessage =
+          "Проблемы с интернет-соединением. Проверьте подключение к сети.";
+      } else if (err.message.includes("HTML вместо JSON")) {
+        userErrorMessage =
+          "Конфигурационная ошибка сервера. Администратор уведомлен.";
       } else if (err.message) {
         // Обрезаем слишком длинные сообщения
-        userErrorMessage = err.message.length > 100 
-          ? `${err.message.substring(0, 100)}...` 
-          : err.message;
+        userErrorMessage =
+          err.message.length > 100
+            ? `${err.message.substring(0, 100)}...`
+            : err.message;
       }
-      
+
       setError(userErrorMessage);
-      
+
       // Показываем кнопку для ручной отправки
       setTimeout(() => {
-        if (error.includes('администратор')) {
-          console.log('📞 Рекомендуется связаться с администратором');
+        if (error.includes("администратор")) {
+          console.log("📞 Рекомендуется связаться с администратором");
         }
       }, 100);
     } finally {
@@ -239,7 +263,9 @@ export const BookingPopup = ({
           {/* Заголовок - фиксированный */}
           <div className="flex items-center justify-between border-b border-gray-200 p-6 shrink-0">
             <h2 className="text-xl font-semibold text-gray-900">
-              {isSuccess ? "Бронювання відправлено" : "Заповніть дані для бронювання"}
+              {isSuccess
+                ? "Бронювання відправлено"
+                : "Заповніть дані для бронювання"}
             </h2>
             {!isLoading && !isSuccess && (
               <button
@@ -262,7 +288,8 @@ export const BookingPopup = ({
                   Дякуємо за бронювання! 🎉
                 </h3>
                 <p className="mb-4 text-gray-600">
-                  Заявка успішно відправлена! З вами зв'яжеться менеджер для підтвердження бронювання протягом 15 хвилин.
+                  Заявка успішно відправлена! З вами зв'яжеться менеджер для
+                  підтвердження бронювання протягом 15 хвилин.
                 </p>
                 <div className="rounded-lg bg-gray-50 p-4 text-left">
                   <p className="text-sm text-gray-500">Номер заявки:</p>
@@ -288,13 +315,16 @@ export const BookingPopup = ({
               <>
                 {/* Информация о бронировании */}
                 <div className="mb-6 rounded-lg bg-blue-50 p-4">
-                  <h3 className="mb-3 font-semibold text-gray-900">{apartmentTitle}</h3>
+                  <h3 className="mb-3 font-semibold text-gray-900">
+                    {apartmentTitle}
+                  </h3>
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-blue-600" />
                       <span className="text-gray-500">Період:</span>
                       <span className="font-medium">
-                        {new Date(checkIn).toLocaleDateString('uk-UA')} - {new Date(checkOut).toLocaleDateString('uk-UA')}
+                        {new Date(checkIn).toLocaleDateString("uk-UA")} -{" "}
+                        {new Date(checkOut).toLocaleDateString("uk-UA")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -307,8 +337,12 @@ export const BookingPopup = ({
                       <span className="font-medium">{nights}</span>
                     </div>
                     <div className="pt-2 border-t border-blue-100 flex justify-between">
-                      <span className="font-medium text-gray-900">Загальна сума:</span>
-                      <span className="font-semibold text-blue-600 text-lg">{totalPrice} ₴</span>
+                      <span className="font-medium text-gray-900">
+                        Загальна сума:
+                      </span>
+                      <span className="font-semibold text-blue-600 text-lg">
+                        {totalPrice} ₴
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -330,7 +364,8 @@ export const BookingPopup = ({
                       className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      Менеджер зв'яжеться з вами за цим номером. Формат: +380XXXXXXXXX
+                      Менеджер зв'яжеться з вами за цим номером. Формат:
+                      +380XXXXXXXXX
                     </p>
                   </div>
 
@@ -360,7 +395,9 @@ export const BookingPopup = ({
                         <ul className="list-disc pl-4 space-y-1">
                           <li>Перевірте підключення до інтернету</li>
                           <li>Спробуйте оновити сторінку</li>
-                          <li>Якщо проблема повторюється - зателефонуйте нам</li>
+                          <li>
+                            Якщо проблема повторюється - зателефонуйте нам
+                          </li>
                         </ul>
                       </div>
                     </div>
@@ -383,9 +420,11 @@ export const BookingPopup = ({
 
                   <div className="rounded-lg bg-blue-50 p-3 border border-blue-200">
                     <p className="text-xs text-blue-700">
-                      📱 <span className="font-medium">Заявка буде відправлена в Telegram-бота</span>
-                      <br />
-                      ⏰ Менеджер отримає сповіщення миттєво
+                      📱{" "}
+                      <span className="font-medium">
+                        Заявка буде відправлена в Telegram-бота
+                      </span>
+                      <br />⏰ Менеджер отримає сповіщення миттєво
                     </p>
                     <p className="text-xs text-blue-600 mt-2">
                       Тестовый режим: проверка API подключения включена
@@ -393,7 +432,8 @@ export const BookingPopup = ({
                   </div>
 
                   <p className="text-center text-xs text-gray-500">
-                    Натискаючи кнопку, ви погоджуєтесь з умовами обробки персональних даних
+                    Натискаючи кнопку, ви погоджуєтесь з умовами обробки
+                    персональних даних
                   </p>
                 </form>
               </>

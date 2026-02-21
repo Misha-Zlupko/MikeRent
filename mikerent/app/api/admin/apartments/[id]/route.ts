@@ -19,20 +19,26 @@ async function verifyAdmin() {
   }
 }
 
-// DELETE /api/admin/apartments/[id]
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> }, // ← Додай Promise
 ) {
-  // Перевіряємо чи це адмін
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    const { id } = await params; // ← Додай await
+
+    // Спочатку видаляємо всі бронювання
+    await prisma.booking.deleteMany({
+      where: { apartmentId: id }, // ← використовуй id
+    });
+
+    // Потім видаляємо квартиру
     await prisma.apartment.delete({
-      where: { id: params.id },
+      where: { id: id }, // ← використовуй id
     });
 
     return NextResponse.json({ success: true });
@@ -42,10 +48,10 @@ export async function DELETE(
   }
 }
 
-// GET /api/admin/apartments/[id] - для редагування
+// GET /api/admin/apartments/[id]
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> }, // ← Додай Promise
 ) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
@@ -53,8 +59,11 @@ export async function GET(
   }
 
   try {
+    const { id } = await params; // ← Додай await
+
     const apartment = await prisma.apartment.findUnique({
-      where: { id: params.id },
+      where: { id: id }, // ← використовуй id
+      include: { bookings: true },
     });
 
     if (!apartment) {
@@ -63,6 +72,7 @@ export async function GET(
 
     return NextResponse.json(apartment);
   } catch (error) {
+    console.error("GET error:", error);
     return NextResponse.json(
       { error: "Помилка завантаження" },
       { status: 500 },
@@ -70,10 +80,10 @@ export async function GET(
   }
 }
 
-// PUT /api/admin/apartments/[id] - оновлення
+// PUT /api/admin/apartments/[id]
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
@@ -81,24 +91,35 @@ export async function PUT(
   }
 
   try {
+    const { id } = await params;
     const data = await req.json();
 
     const apartment = await prisma.apartment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: data.title,
-        type: data.type,
+        type: data.type?.toUpperCase() || "APARTMENT",
         city: data.city,
-        address: data.address,
+        address: data.address || "",
         pricePerNight: Number(data.pricePerNight),
-        guests: Number(data.guests),
-        bedrooms: Number(data.bedrooms),
-        beds: Number(data.beds),
-        bathrooms: Number(data.bathrooms),
-        description: data.description,
-        images: data.images,
-        amenities: data.amenities,
-        mapUrl: data.mapUrl,
+        guests: Number(data.guests) || 2,
+        bedrooms: Number(data.bedrooms) || 1,
+        beds: Number(data.beds) || Number(data.bedrooms) || 1,
+        bathrooms: Number(data.bathrooms) || 1,
+        description: data.description || "",
+        images: data.images || [],
+        amenities: data.amenities || [],
+        mapUrl: data.mapUrl || "",
+        rating: data.rating || 0,
+        reviewsCount: data.reviewsCount || 0,
+        // 👇 ЗАМІСТЬ seasonFrom/seasonTo ВИКОРИСТОВУЄМО availability
+        availability: {
+          season: {
+            from: data.seasonFrom || "",
+            to: data.seasonTo || "",
+          },
+          booked: data.bookings || [],
+        },
       },
     });
 

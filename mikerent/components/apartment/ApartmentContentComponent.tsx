@@ -15,6 +15,7 @@ type Props = {
 };
 
 export const ApartmentContent = ({ apartment }: Props) => {
+  console.log(apartment);
   return (
     <div className="lg:col-span-2">
       <ApartmentFacts

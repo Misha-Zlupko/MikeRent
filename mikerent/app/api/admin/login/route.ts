@@ -11,11 +11,14 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
+    console.log("Login attempt:", email);
+
     const admin = await prisma.admin.findUnique({
       where: { email },
     });
 
     if (!admin) {
+      console.log("Admin not found");
       return NextResponse.json(
         { error: "Невірний email або пароль" },
         { status: 401 },
@@ -25,6 +28,7 @@ export async function POST(req: Request) {
     const isValid = await bcrypt.compare(password, admin.password);
 
     if (!isValid) {
+      console.log("Invalid password");
       return NextResponse.json(
         { error: "Невірний email або пароль" },
         { status: 401 },
@@ -43,8 +47,10 @@ export async function POST(req: Request) {
       path: "/",
     });
 
+    console.log("Login successful");
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json({ error: "Помилка сервера" }, { status: 500 });
   }
 }
