@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import Link from "next/link";
 import { Plus, Pencil, Trash2, Eye, Calendar, ArrowLeft } from "lucide-react";
