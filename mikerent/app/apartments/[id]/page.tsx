@@ -14,6 +14,7 @@ type PageProps = {
 export default async function ApartmentPage({ params }: PageProps) {
   const { id } = await params;
 
+
   const apartment = await prisma.apartment.findUnique({
     where: { id },
     include: { bookings: true },
@@ -22,7 +23,6 @@ export default async function ApartmentPage({ params }: PageProps) {
   if (!apartment) {
     return null;
   }
-
   return (
     <main className="container py-8">
       <section className="grid grid-cols-1 lg:grid-cols-10 gap-8">

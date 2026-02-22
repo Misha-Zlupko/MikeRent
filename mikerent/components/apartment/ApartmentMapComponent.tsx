@@ -10,26 +10,62 @@ type Props = {
 };
 
 export const ApartmentMapComponent = ({ apartment }: Props) => {
-  if (!apartment?.address) {
+  if (!apartment?.address && !apartment?.mapUrl) {
     return null;
   }
 
-  const getEmbedUrl = () => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
-    const address = encodeURIComponent(apartment.address);
-
-    if (apiKey) {
-      return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${address}&zoom=15`;
-    } else {
-      return `https://maps.google.com/maps?q=${address}&output=embed`;
+  const getEmbedUrlFromMapUrl = (mapUrl: string | null) => {
+    if (!mapUrl?.trim()) {
+      return null;
     }
+
+    try {
+      const url = new URL(mapUrl);
+
+      // Already an embeddable URL.
+      if (
+        url.searchParams.get("output") === "embed" ||
+        url.pathname.includes("/maps/embed")
+      ) {
+        return url.toString();
+      }
+
+      // Convert regular Maps URL query to embed URL.
+      const q = url.searchParams.get("q") || url.searchParams.get("query");
+      if (q) {
+        return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(q)}`;
+      }
+
+      // Handle URLs like /maps/place/Some+Address/...
+      const placeMatch = url.pathname.match(/\/maps\/place\/([^/]+)/);
+      if (placeMatch?.[1]) {
+        const place = decodeURIComponent(placeMatch[1]).replace(/\+/g, " ");
+        return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(place)}`;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  };
+
+  const getEmbedUrl = () => {
+    const mapUrlEmbed = getEmbedUrlFromMapUrl(apartment.mapUrl);
+    if (mapUrlEmbed) {
+      return mapUrlEmbed;
+    }
+
+    const address = encodeURIComponent(apartment.address || "");
+    return `https://www.google.com/maps?output=embed&q=${address}`;
   };
 
   return (
     <div className="w-full rounded-xl overflow-hidden border border-gray-200">
       <div className="p-4 bg-gray-50 border-b border-gray-200">
         <h3 className="font-semibold mb-1">Розташування</h3>
-        <p className="text-gray-600 text-sm">{apartment.address}</p>
+        <p className="text-gray-600 text-sm">
+          {apartment.address || "Адреса не вказана"}
+        </p>
       </div>
 
       <div className="h-80">
