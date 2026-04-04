@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { Plus, Pencil, Trash2, Eye, Calendar, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, ArrowLeft, Phone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import DeleteButton from "@/components/admin/DeleteButton";
 
@@ -95,6 +95,14 @@ export default async function ApartmentsPage() {
             }
           </p>
         </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <p className="text-sm text-gray-500">Середній рейтинг</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {apartments.length > 0
+              ? (apartments.reduce((acc, a) => acc + a.rating, 0) / apartments.length).toFixed(1)
+              : "0"}
+          </p>
+        </div>
       </div>
 
       {/* Таблиця квартир */}
@@ -111,6 +119,9 @@ export default async function ApartmentsPage() {
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">
                   Місто
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">
+                  Тел. хазяїна
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">
                   Ціна/ніч
@@ -162,17 +173,27 @@ export default async function ApartmentsPage() {
                     </td>
                     <td className="p-4 text-gray-600">{apt.city}</td>
                     <td className="p-4">
+                      {apt.ownerPhone ? (
+                        <a
+                          href={`tel:${apt.ownerPhone.replace(/\s/g, "")}`}
+                          className="inline-flex items-center gap-1 text-sm text-gray-900 hover:text-blue-600"
+                        >
+                          <Phone size={14} className="shrink-0 text-gray-400" />
+                          {apt.ownerPhone}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="p-4">
                       <span className="font-medium text-gray-900">
                         ${apt.pricePerNight}
                       </span>
                     </td>
                     <td className="p-4">
                       <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                        {apt.type.toLowerCase() === "apartment"
-                          ? "Квартира"
-                          : apt.type.toLowerCase() === "house"
-                            ? "Будинок"
-                            : "Кімната"}
+                        {apt.type === "APARTMENT" ? "Квартира" :
+                         apt.type === "HOUSE" ? "Будинок" : "Кімната"}
                       </span>
                     </td>
                     <td className="p-4">

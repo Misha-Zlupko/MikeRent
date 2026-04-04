@@ -101,6 +101,7 @@ export async function PUT(
         type: data.type?.toUpperCase() || "APARTMENT",
         city: data.city,
         address: data.address || "",
+        ownerPhone: data.ownerPhone?.toString().trim() || null,
         pricePerNight: Number(data.pricePerNight),
         guests: Number(data.guests) || 2,
         bedrooms: Number(data.bedrooms) || 1,

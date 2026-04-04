@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const apartments = await prisma.apartment.findMany();
-  return NextResponse.json(apartments);
+  const publicRows = apartments.map(
+    ({ ownerPhone: _ownerPhone, ...rest }) => rest,
+  );
+  return NextResponse.json(publicRows);
 }
 

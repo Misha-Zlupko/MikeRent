@@ -55,6 +55,7 @@ export async function POST(req: Request) {
         type: data.type || "apartment",
         city: data.city,
         address: data.address || "",
+        ownerPhone: data.ownerPhone?.toString().trim() || null,
         pricePerNight: Number(data.pricePerNight),
         guests: Number(data.guests) || 1,
         bedrooms: Number(data.bedrooms) || 1,

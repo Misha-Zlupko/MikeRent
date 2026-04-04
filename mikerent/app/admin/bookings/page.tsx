@@ -181,6 +181,18 @@ export default async function BookingsPage() {
                       <div className="text-sm text-gray-500">
                         {booking.apartment.city}
                       </div>
+                      {booking.apartment.ownerPhone && (
+                        <div className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                          <Phone size={12} className="text-gray-400" />
+                          <span className="text-gray-500">Хазяїн:</span>
+                          <a
+                            href={`tel:${booking.apartment.ownerPhone.replace(/\s/g, "")}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {booking.apartment.ownerPhone}
+                          </a>
+                        </div>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="font-medium text-gray-900">

@@ -29,6 +29,7 @@ model Apartment {
 
   city          String
   address       String
+  ownerPhone    String? // лише для адмінки — телефон хазяїна квартири
 
   pricePerNight Int
 

@@ -37,6 +37,7 @@ export default function NewApartmentPage() {
       type: formData.get("type")?.toString().toUpperCase(),
       city: formData.get("city"),
       address: formData.get("address"),
+      ownerPhone: formData.get("ownerPhone")?.toString().trim() || null,
       pricePerNight: Number(formData.get("pricePerNight")),
       guests: Number(formData.get("guests")),
       bedrooms: Number(formData.get("bedrooms")),
@@ -210,6 +211,22 @@ export default function NewApartmentPage() {
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   placeholder="вул. Коперника, 10"
                 />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Телефон хазяїна (лише для адмінки)
+                </label>
+                <input
+                  name="ownerPhone"
+                  type="tel"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder="+380971234567"
+                  autoComplete="tel"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Не показується гостям на сайті — тільки в панелі адміністратора.
+                </p>
               </div>
             </div>
           </div>
