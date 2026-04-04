@@ -37,7 +37,6 @@ export default function NewApartmentPage() {
       type: formData.get("type")?.toString().toUpperCase(),
       city: formData.get("city"),
       address: formData.get("address"),
-      ownerPhone: formData.get("ownerPhone")?.toString().trim() || null,
       pricePerNight: Number(formData.get("pricePerNight")),
       guests: Number(formData.get("guests")),
       bedrooms: Number(formData.get("bedrooms")),
@@ -51,9 +50,6 @@ export default function NewApartmentPage() {
       // 👇 Сезон (вже має значення завдяки дефолтному useState)
       seasonFrom: seasonFrom ? new Date(seasonFrom) : null,
       seasonTo: seasonTo ? new Date(seasonTo) : null,
-
-      rating: 0,
-      reviewsCount: 0,
     };
 
     try {

@@ -6,6 +6,12 @@ import PriceSummary from "./financial/PriceSummary";
 import PrepaymentSection from "./financial/PrepaymentSection";
 import TotalSummary from "./financial/TotalSummary";
 import { useEffect } from "react";
+import { BOOKING_AMOUNT_UAH_FACTOR } from "@/lib/bookingAmounts";
+
+function roundMoney2(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100) / 100;
+}
 
 type Props = {
   selectedApartment: any;
@@ -43,9 +49,11 @@ export default function FinancialSection({
   // ✅ Правильно: зміна стану тільки в useEffect
   useEffect(() => {
     if (selectedApartment && nights > 0 && ownerPricePerNight === 0) {
-      const basePrice = selectedApartment.pricePerNight * 42; // конвертуємо долари в гривні
+      const basePrice = roundMoney2(
+        selectedApartment.pricePerNight * BOOKING_AMOUNT_UAH_FACTOR,
+      );
       onOwnerPriceChange(basePrice);
-      onMarkupChange(Math.round(basePrice * 0.2));
+      onMarkupChange(roundMoney2(basePrice * 0.2));
     }
   }, [
     selectedApartment,

@@ -2,9 +2,11 @@ import Link from "next/link";
 
 type Props = {
   loading: boolean;
+  submitLabel?: string;
 };
 
-export default function FormActions({ loading }: Props) {
+export default function FormActions({ loading, submitLabel }: Props) {
+  const label = submitLabel ?? "Створити бронювання";
   return (
     <div className="flex gap-4">
       <button
@@ -12,7 +14,7 @@ export default function FormActions({ loading }: Props) {
         disabled={loading}
         className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
-        {loading ? "Збереження..." : "Створити бронювання"}
+        {loading ? "Збереження..." : label}
       </button>
 
       <Link

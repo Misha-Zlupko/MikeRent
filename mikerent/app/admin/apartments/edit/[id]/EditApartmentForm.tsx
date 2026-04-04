@@ -30,8 +30,6 @@ type ApartmentData = {
   seasonFrom: string;
   seasonTo: string;
   bookings: BookedPeriod[];
-  rating: number;
-  reviewsCount: number;
 };
 
 export default function EditApartmentForm({
@@ -77,8 +75,6 @@ export default function EditApartmentForm({
       mapUrl: formData.get("mapUrl"),
       seasonFrom: seasonFrom ? new Date(seasonFrom) : null,
       seasonTo: seasonTo ? new Date(seasonTo) : null,
-      rating: apartment.rating || 0,
-      reviewsCount: apartment.reviewsCount || 0,
     };
 
     try {

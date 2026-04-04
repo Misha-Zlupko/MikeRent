@@ -5,6 +5,11 @@ type Props = {
   onMarkupChange: (value: number) => void;
 };
 
+function round2(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100) / 100;
+}
+
 export default function PriceInputs({
   ownerPricePerNight,
   markupPerNight,
@@ -21,8 +26,8 @@ export default function PriceInputs({
           type="number"
           min="0"
           step="0.01"
-          value={ownerPricePerNight}
-          onChange={(e) => onOwnerPriceChange(Number(e.target.value))}
+          value={round2(ownerPricePerNight)}
+          onChange={(e) => onOwnerPriceChange(round2(Number(e.target.value)))}
           className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -35,8 +40,8 @@ export default function PriceInputs({
           type="number"
           min="0"
           step="0.01"
-          value={markupPerNight}
-          onChange={(e) => onMarkupChange(Number(e.target.value))}
+          value={round2(markupPerNight)}
+          onChange={(e) => onMarkupChange(round2(Number(e.target.value)))}
           className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
         />
       </div>

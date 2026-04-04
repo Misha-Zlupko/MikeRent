@@ -39,8 +39,6 @@ model Apartment {
   bathrooms     Int
 
   images        String[]
-  rating        Float
-  reviewsCount  Int
   description   String
   mapUrl        String
   amenities     String[]

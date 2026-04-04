@@ -21,8 +21,6 @@ async function getApartments(): Promise<Apartment[]> {
     beds: a.beds,
     bathrooms: a.bathrooms,
     images: a.images,
-    rating: a.rating,
-    reviewsCount: a.reviewsCount,
     description: a.description,
     mapUrl: a.mapUrl,
     amenities: a.amenities,

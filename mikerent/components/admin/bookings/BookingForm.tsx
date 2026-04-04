@@ -1,19 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ApartmentSelector from "./ApartmentSelector";
 import DateSelector from "./DateSelector";
 import GuestInfo from "./GuestInfo";
 import FinancialSection from "./FinancialSection";
 import FormActions from "./FormActions";
+import { ClipboardList } from "lucide-react";
+import { BOOKING_AMOUNT_UAH_FACTOR } from "@/lib/bookingAmounts";
 
-type BookingFormProps = {
-  onSubmit: (data: any) => void;
-  loading: boolean;
+export type InitialBookingValues = {
+  apartment: {
+    id: string;
+    title: string;
+    city: string;
+    pricePerNight: number;
+  };
+  dateFrom: string;
+  dateTo: string;
+  guestName: string | null;
+  guestPhone: string | null;
+  guestCount: number | null;
+  guestContact: string | null;
+  ownerPhone: string | null;
+  totalAmount: number | null;
+  ownerPayout: number | null;
+  ourProfit: number | null;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED";
 };
 
-export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
-  const [selectedApartment, setSelectedApartment] = useState<any>(null);
+type BookingFormProps = {
+  onSubmit: (data: Record<string, unknown>) => void;
+  loading: boolean;
+  initialBooking?: InitialBookingValues | null;
+  submitLabel?: string;
+};
+
+/** Гривні з 2 знаками після коми — без 1199.9999998 через float */
+function roundMoney2(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100) / 100;
+}
+
+export default function BookingForm({
+  onSubmit,
+  loading,
+  initialBooking,
+  submitLabel,
+}: BookingFormProps) {
+  const [selectedApartment, setSelectedApartment] = useState<{
+    id: string;
+    title: string;
+    city: string;
+    pricePerNight: number;
+  } | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [guestName, setGuestName] = useState("");
@@ -21,6 +61,9 @@ export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
   const [guestCount, setGuestCount] = useState(1);
   const [guestContact, setGuestContact] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
+  const [status, setStatus] = useState<
+    "PENDING" | "CONFIRMED" | "CANCELLED"
+  >("CONFIRMED");
 
   // Стан для передоплати
   const [prepaidTo, setPrepaidTo] = useState<"me" | "owner">("me");
@@ -39,11 +82,54 @@ export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
         )
       : 0;
 
-  // Фінансові розрахунки в гривнях
-  const ownerTotalPrice = ownerPricePerNight * nights; // всього хазяїну (грн)
-  const clientTotal = (ownerPricePerNight + markupPerNight) * nights; // всього з клієнта (грн)
-  const ourProfit = markupPerNight * nights; // мій прибуток (грн)
-  const remainingToPay = clientTotal - paidAmount; // залишок до сплати (грн)
+  // Фінансові розрахунки в гривнях (округлення — щоб не «плили» суми в UI)
+  const ownerTotalPrice = roundMoney2(ownerPricePerNight * nights);
+  const clientTotal = roundMoney2(
+    (ownerPricePerNight + markupPerNight) * nights,
+  );
+  const ourProfit = roundMoney2(markupPerNight * nights);
+  const remainingToPay = roundMoney2(clientTotal - paidAmount);
+
+  useEffect(() => {
+    if (!initialBooking) return;
+
+    const apt = initialBooking.apartment;
+    setSelectedApartment({
+      id: apt.id,
+      title: apt.title,
+      city: apt.city,
+      pricePerNight: apt.pricePerNight,
+    });
+
+    const from = new Date(initialBooking.dateFrom);
+    const to = new Date(initialBooking.dateTo);
+    setDateFrom(from.toISOString().slice(0, 10));
+    setDateTo(to.toISOString().slice(0, 10));
+
+    setGuestName(initialBooking.guestName ?? "");
+    setGuestPhone(initialBooking.guestPhone ?? "");
+    setGuestCount(initialBooking.guestCount ?? 1);
+    setGuestContact(initialBooking.guestContact ?? "");
+    setOwnerPhone(initialBooking.ownerPhone ?? "");
+    setStatus(initialBooking.status);
+
+    const n = Math.ceil(
+      Math.abs(to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (n > 0) {
+      const ownerUah =
+        (initialBooking.ownerPayout ?? 0) * BOOKING_AMOUNT_UAH_FACTOR;
+      const profitUah =
+        (initialBooking.ourProfit ?? 0) * BOOKING_AMOUNT_UAH_FACTOR;
+      setOwnerPricePerNight(roundMoney2(ownerUah / n));
+      setMarkupPerNight(roundMoney2(profitUah / n));
+    } else {
+      setOwnerPricePerNight(0);
+      setMarkupPerNight(0);
+    }
+    setPaidAmount(0);
+    setPrepaidTo("me");
+  }, [initialBooking]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +141,10 @@ export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
       guestPhone,
       guestCount,
       guestContact,
-      // Конвертуємо назад в долари для старої таблиці
-      totalAmount: clientTotal / 42,
-      ownerPayout: ownerTotalPrice / 42,
-      ourProfit: ourProfit / 42,
+      // У БД — ті ж суми в гривнях, поділені на BOOKING_AMOUNT_UAH_FACTOR
+      totalAmount: clientTotal / BOOKING_AMOUNT_UAH_FACTOR,
+      ownerPayout: ownerTotalPrice / BOOKING_AMOUNT_UAH_FACTOR,
+      ourProfit: ourProfit / BOOKING_AMOUNT_UAH_FACTOR,
       // Або використовуй нові поля
       totalAmountUAH: clientTotal,
       ownerPayoutUAH: ownerTotalPrice,
@@ -66,7 +152,7 @@ export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
       prepaidUAH: paidAmount,
       prepaidTo,
       ownerPhone,
-      status: "CONFIRMED",
+      status,
     });
   };
 
@@ -96,6 +182,24 @@ export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
         onGuestContactChange={setGuestContact}
       />
 
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <ClipboardList size={20} className="text-blue-600" />
+          Статус бронювання
+        </h2>
+        <select
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value as "PENDING" | "CONFIRMED" | "CANCELLED")
+          }
+          className="w-full max-w-md p-2 border rounded focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="PENDING">Очікує</option>
+          <option value="CONFIRMED">Підтверджено</option>
+          <option value="CANCELLED">Скасовано</option>
+        </select>
+      </div>
+
       <FinancialSection
         selectedApartment={selectedApartment}
         nights={nights}
@@ -113,7 +217,7 @@ export default function BookingForm({ onSubmit, loading }: BookingFormProps) {
         remainingToPay={remainingToPay}
       />
 
-      <FormActions loading={loading} />
+      <FormActions loading={loading} submitLabel={submitLabel} />
     </form>
   );
 }

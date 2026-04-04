@@ -66,8 +66,6 @@ export default async function ApartmentPage({ params }: PageProps) {
               id: apartment.id,
               title: apartment.title,
               pricePerNight: apartment.pricePerNight,
-              rating: apartment.rating,
-              reviewsCount: apartment.reviewsCount,
               guests: apartment.guests,
               availability: {
                 booked: apartment.bookings.map((b) => ({

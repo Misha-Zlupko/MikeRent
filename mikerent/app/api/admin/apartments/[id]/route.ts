@@ -111,8 +111,6 @@ export async function PUT(
         images: data.images || [],
         amenities: data.amenities || [],
         mapUrl: data.mapUrl || "",
-        rating: data.rating || 0,
-        reviewsCount: data.reviewsCount || 0,
         // 👇 ЗАМІСТЬ seasonFrom/seasonTo ВИКОРИСТОВУЄМО availability
         availability: {
           season: {

@@ -65,8 +65,6 @@ export async function POST(req: Request) {
         images: data.images || [],
         amenities: data.amenities || [],
         mapUrl: data.mapUrl || "",
-        rating: 0,
-        reviewsCount: 0,
         // ✅ ЗБЕРІГАЄМО ЯК Є - прямо JSON
         availability: data.availability || {
           season: { from: "", to: "" },

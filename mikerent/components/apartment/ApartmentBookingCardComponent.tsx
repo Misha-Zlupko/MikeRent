@@ -18,8 +18,6 @@ type Props = {
     id: string;
     title: string;
     pricePerNight: number;
-    rating: number;
-    reviewsCount: number;
     guests: number;
     availability: {
       booked: { from: string; to: string }[];
@@ -130,22 +128,11 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
   return (
     <>
       <div className="sticky top-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <span className="text-2xl font-bold">
-              {apartment.pricePerNight} ₴
-            </span>
-            <span className="text-sm text-gray-500"> / ніч</span>
-          </div>
-
-          <div className="flex items-center gap-1 text-sm text-gray-600">
-            <span className="text-yellow-500">★</span>
-            <span className="font-medium text-gray-900">{apartment.rating}</span>
-            <span>·</span>
-            <span className="underline cursor-pointer">
-              {apartment.reviewsCount} відгуків
-            </span>
-          </div>
+        <div className="mb-6">
+          <span className="text-2xl font-bold">
+            {apartment.pricePerNight} ₴
+          </span>
+          <span className="text-sm text-gray-500"> / ніч</span>
         </div>
 
         {/* Выбор дат через календарь */}

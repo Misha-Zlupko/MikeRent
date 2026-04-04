@@ -17,6 +17,80 @@ async function verifyAdmin() {
   }
 }
 
+// GET /api/admin/bookings/[id]
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { apartment: true },
+    });
+
+    if (!booking) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(booking);
+  } catch (error) {
+    console.error("GET booking error:", error);
+    return NextResponse.json(
+      { error: "Помилка завантаження" },
+      { status: 500 },
+    );
+  }
+}
+
+// PUT /api/admin/bookings/[id]
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const data = await req.json();
+
+    const booking = await prisma.booking.update({
+      where: { id },
+      data: {
+        apartmentId: data.apartmentId,
+        dateFrom: new Date(data.dateFrom),
+        dateTo: new Date(data.dateTo),
+        guestName: data.guestName || null,
+        guestPhone: data.guestPhone || null,
+        guestCount: data.guestCount ? Number(data.guestCount) : null,
+        guestContact: data.guestContact || null,
+        totalAmount: data.totalAmount != null ? Number(data.totalAmount) : null,
+        ownerPayout: data.ownerPayout != null ? Number(data.ownerPayout) : null,
+        ourProfit: data.ourProfit != null ? Number(data.ourProfit) : null,
+        ownerPhone: data.ownerPhone || null,
+        status: data.status || "CONFIRMED",
+      },
+      include: { apartment: true },
+    });
+
+    return NextResponse.json(booking);
+  } catch (error) {
+    console.error("Update booking error:", error);
+    return NextResponse.json(
+      { error: "Помилка оновлення" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },

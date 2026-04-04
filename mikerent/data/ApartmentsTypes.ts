@@ -39,9 +39,6 @@ export type Apartment = {
 
   images: string[];
 
-  rating: number;
-  reviewsCount: number;
-
   description: string;
 
   mapUrl: string;

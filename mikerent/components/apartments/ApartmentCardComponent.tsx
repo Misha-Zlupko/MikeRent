@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, Star, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Heart } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import Link from "next/link";
@@ -152,16 +152,9 @@ export const ApartmentCard = ({ apartment }: Props) => {
         {/* Контент */}
         <div className="p-4 flex flex-col gap-2 flex-1">
           <div className="mb-auto">
-            <div className="flex justify-between items-start gap-2">
-              <h3 className="font-bold mb-1 text-sm sm:text-base line-clamp-2">
-                {apartment.title}
-              </h3>
-
-              <div className="flex items-center gap-1 text-xs sm:text-sm shrink-0">
-                <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
-                {apartment.rating}
-              </div>
-            </div>
+            <h3 className="font-bold mb-1 text-sm sm:text-base line-clamp-2">
+              {apartment.title}
+            </h3>
 
             <p className="text-xs sm:text-sm text-gray-500">
               {apartment.address}
