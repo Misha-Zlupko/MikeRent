@@ -164,29 +164,59 @@ export const ApartmentGallery = ({ apartment }: Props) => {
       )}
 
       {/* Кнопки действий */}
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          onClick={toggleFavorite}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors"
-        >
-          <Heart
-            size={18}
-            className={isFavorite ? "fill-blue-500 text-blue-500" : "text-gray-600"}
-          />
-          {isFavorite ? "Вилучити з обраних" : "Додати в обране"}
-        </button>
+      <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
+  <button
+    onClick={toggleFavorite}
+    className="
+      flex items-center gap-1.5 sm:gap-2 
+      px-3 sm:px-4 
+      py-2 sm:py-2.5 
+      rounded-full 
+      border border-gray-300 
+      bg-white hover:bg-gray-50 
+      text-gray-700 
+      transition-colors
+      text-sm sm:text-base
+    "
+  >
+    <Heart
+      size={16}
+      className={`
+        sm:w-[18px] sm:h-[18px]
+        ${isFavorite ? "fill-blue-500 text-blue-500" : "text-gray-600"}
+      `}
+    />
+    <span className="text-xs sm:text-sm">
+      {isFavorite ? "Вилучити з обраних" : "Додати в обране"}
+    </span>
+  </button>
 
-        <button
-          onClick={shareLink}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors"
-        >
-          <Share2
-            size={18}
-            className={copied ? "text-green-500" : "text-gray-600"}
-          />
-          {copied ? "Посилання скопійовано" : "Скопіювати посилання"}
-        </button>
-      </div>
+  <button
+    onClick={shareLink}
+    className="
+      flex items-center gap-1.5 sm:gap-2 
+      px-3 sm:px-4 
+      py-2 sm:py-2.5 
+      rounded-full 
+      border border-gray-300 
+      bg-white hover:bg-gray-50 
+      text-gray-700 
+      transition-colors
+      text-sm sm:text-base
+    "
+  >
+    <Share2
+      size={16}
+      className={`
+        sm:w-[18px] sm:h-[18px]
+        ${copied ? "text-green-500" : "text-gray-600"}
+      `}
+    />
+    <span className="text-xs sm:text-sm">
+      {copied ? "Посилання скопійовано" : "Скопіювати посилання"}
+    </span>
+  </button>
+</div>
     </div>
   );
 };
