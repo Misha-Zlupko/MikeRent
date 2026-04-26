@@ -13,6 +13,11 @@ enum ApartmentType {
   ROOM
 }
 
+enum ApartmentCategory {
+  EXCLUSIVE
+  SHARED
+}
+
 model Admin {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -26,10 +31,12 @@ model Apartment {
   id            String        @id @default(cuid())
   title         String
   type          ApartmentType
+  category      ApartmentCategory @default(EXCLUSIVE)
 
   city          String
   address       String
   ownerPhone    String? // лише для адмінки — телефон хазяїна квартири
+  lastCalledAt  DateTime? // позначка останнього прозвону (скидається логічно через 12 год)
 
   pricePerNight Int
 

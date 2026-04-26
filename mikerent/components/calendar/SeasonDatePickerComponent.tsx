@@ -34,6 +34,7 @@ export const SeasonDatePicker = ({
     checkOut: currentCheckOut || null
   });
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string>("");
   
   const SEASON_YEAR = 2026;
   const SEASON_MONTHS = [5, 6, 7, 8]; // Июнь, Июль, Август, Сентябрь (0-indexed)
@@ -81,10 +82,33 @@ export const SeasonDatePicker = ({
     
     return !isDateBooked(date) && !isDateInPast(date);
   };
+
+  const getMaxNightsInWindow = (anchorDate: Date): number => {
+    const dayMs = 1000 * 60 * 60 * 24;
+    let left = new Date(anchorDate);
+    let right = new Date(anchorDate);
+
+    while (true) {
+      const prev = new Date(left.getTime() - dayMs);
+      if (!isDateAvailable(prev)) break;
+      left = prev;
+    }
+
+    while (true) {
+      const next = new Date(right.getTime() + dayMs);
+      if (!isDateAvailable(next)) break;
+      right = next;
+    }
+
+    const daysInWindow =
+      Math.floor((right.getTime() - left.getTime()) / dayMs) + 1;
+    return Math.max(0, daysInWindow - 1);
+  };
   
   // Обработка клика по дате
   const handleDateClick = (date: Date) => {
     if (!isDateAvailable(date)) return;
+    setValidationError("");
     
     const dateString = date.toISOString().split('T')[0];
     
@@ -167,6 +191,23 @@ export const SeasonDatePicker = ({
   // Применение выбора
   const handleApply = () => {
     if (selectedDates.checkIn && selectedDates.checkOut) {
+      const nights = Math.ceil(
+        (new Date(selectedDates.checkOut).getTime() -
+          new Date(selectedDates.checkIn).getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+      const maxNightsInWindow = getMaxNightsInWindow(
+        new Date(selectedDates.checkIn),
+      );
+      const canUseShortWindow = maxNightsInWindow < 3;
+
+      if (nights < 3 && !canUseShortWindow) {
+        setValidationError(
+          "Мінімальне бронювання — 3 ночі. Менше можна тільки якщо між бронями утворилось вікно менше 3 ночей.",
+        );
+        return;
+      }
+
       onDatesSelected(selectedDates.checkIn, selectedDates.checkOut);
       onClose();
     }
@@ -308,6 +349,11 @@ export const SeasonDatePicker = ({
 
         {/* Статус выбора */}
         <div className="border-t border-gray-200 p-6">
+          {validationError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {validationError}
+            </div>
+          )}
           {selectedDates.checkIn && selectedDates.checkOut ? (
             <div className="space-y-4">
               <div className="p-4 bg-green-50 rounded-lg border border-green-200">

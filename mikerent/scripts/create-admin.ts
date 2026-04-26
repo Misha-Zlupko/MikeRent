@@ -1,18 +1,29 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = "admin@mikerent.com";
-  const password = "admin_misha_123"; // зміни на свій пароль!
-  const name = "Administrator";
+  const email = process.env.ADMIN_EMAIL?.trim();
+  const password = process.env.ADMIN_PASSWORD;
+  const name = process.env.ADMIN_NAME?.trim() || "Administrator";
+
+  if (!email || !password) {
+    console.error(
+      "Задайте в .env: ADMIN_EMAIL та ADMIN_PASSWORD (див. .env.example)",
+    );
+    process.exit(1);
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const admin = await prisma.admin.upsert({
     where: { email },
-    update: {},
+    update: {
+      password: hashedPassword,
+      name,
+    },
     create: {
       email,
       password: hashedPassword,
@@ -20,7 +31,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Адміністратора створено:", admin.email);
+  console.log("✅ Адміністратор:", admin.email, "(пароль синхронізовано з .env)");
 }
 
 main()

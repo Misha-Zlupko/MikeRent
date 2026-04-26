@@ -99,6 +99,7 @@ export async function PUT(
       data: {
         title: data.title,
         type: data.type?.toUpperCase() || "APARTMENT",
+        category: data.category?.toUpperCase() || "EXCLUSIVE",
         city: data.city,
         address: data.address || "",
         ownerPhone: data.ownerPhone?.toString().trim() || null,

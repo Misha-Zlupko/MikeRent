@@ -5,6 +5,9 @@ import Link from "next/link";
 import { Home, Calendar, Users, PlusCircle } from "lucide-react";
 
 export default async function AdminDashboard() {
+  const adminEmail =
+    process.env.ADMIN_EMAIL?.trim() || "admin@mikerent.com";
+
   // Отримуємо статистику з бази даних
   const [apartmentsCount, bookingsCount, recentBookings] = await Promise.all([
     prisma.apartment.count(),
@@ -27,7 +30,7 @@ export default async function AdminDashboard() {
               <h1 className="text-xl font-bold">Mikerent Admin</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">admin@mikerent.com</span>
+              <span className="text-sm text-gray-600">{adminEmail}</span>
               <form action="/api/admin/logout" method="POST">
                 <button className="text-sm text-red-600 hover:text-red-800">
                   Вийти

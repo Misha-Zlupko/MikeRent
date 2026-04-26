@@ -15,6 +15,7 @@ type ApartmentData = {
   id: string;
   title: string;
   type: string;
+  category?: string;
   city: string;
   address: string;
   pricePerNight: number;
@@ -61,6 +62,7 @@ export default function EditApartmentForm({
     const data = {
       title: formData.get("title"),
       type: formData.get("type")?.toString().toUpperCase(),
+      category: formData.get("category")?.toString().toUpperCase(),
       city: formData.get("city"),
       address: formData.get("address"),
       ownerPhone: formData.get("ownerPhone")?.toString().trim() || null,
@@ -217,6 +219,25 @@ export default function EditApartmentForm({
                   <option value="apartment">Квартира</option>
                   <option value="house">Будинок</option>
                   <option value="room">Кімната</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Група квартири *
+                </label>
+                <select
+                  name="category"
+                  defaultValue={apartment.category || "EXCLUSIVE"}
+                  required
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="EXCLUSIVE">
+                    Ексклюзивна (заселяє тільки Mikerent)
+                  </option>
+                  <option value="SHARED">
+                    Спільна (потрібен щоденний прозвон)
+                  </option>
                 </select>
               </div>
 
