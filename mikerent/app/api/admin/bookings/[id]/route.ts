@@ -5,6 +5,12 @@ import { cookies } from "next/headers";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
+function withUtcHour(value: unknown, hour: number) {
+  const date = new Date(String(value));
+  date.setUTCHours(hour, 0, 0, 0);
+  return date;
+}
+
 async function verifyAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
@@ -66,8 +72,8 @@ export async function PUT(
       where: { id },
       data: {
         apartmentId: data.apartmentId,
-        dateFrom: new Date(data.dateFrom),
-        dateTo: new Date(data.dateTo),
+        dateFrom: withUtcHour(data.dateFrom, 14),
+        dateTo: withUtcHour(data.dateTo, 12),
         guestName: data.guestName || null,
         guestPhone: data.guestPhone || null,
         guestCount: data.guestCount ? Number(data.guestCount) : null,

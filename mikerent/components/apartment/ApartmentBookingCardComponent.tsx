@@ -58,17 +58,17 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
       setDateError("Будь ласка, оберіть дати заїзду та виїзду");
       return false;
     }
-
+  
     const startDate = new Date(checkIn);
     const endDate = new Date(checkOut);
     
-    // Проверяем, что дата выезда позже даты заезда
+    // Перевіряємо, що дата виїзду пізніше дати заїзду
     if (endDate <= startDate) {
       setDateError("Дата виїзду повинна бути пізніше дати заїзду");
       return false;
     }
     
-    // Проверяем, что дата заезда не в прошлом
+    // Перевіряємо, що дата заїзду не в минулому
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (startDate < today) {
@@ -76,7 +76,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
       return false;
     }
     
-    // Проверяем сезонность (июнь-сентябрь 2026)
+    // Перевіряємо сезонність
     const seasonStart = new Date("2026-06-01");
     const seasonEnd = new Date("2026-09-30");
     
@@ -85,25 +85,22 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
       return false;
     }
     
-    // Проверяем забронированные даты
+    // 👇 ОСНОВНА ФІКСАЦІЯ: перевірка перетину з заброньованими датами
     for (const booking of apartment.availability.booked) {
       const bookedStart = new Date(booking.from);
       const bookedEnd = new Date(booking.to);
       
-      // Проверяем пересечение интервалов
-      if (
-        (startDate >= bookedStart && startDate <= bookedEnd) ||
-        (endDate >= bookedStart && endDate <= bookedEnd) ||
-        (startDate <= bookedStart && endDate >= bookedEnd)
-      ) {
-        setDateError(`Цей період частково або повністю заброньований (${bookedStart.toLocaleDateString('uk-UA')} - ${bookedEnd.toLocaleDateString('uk-UA')})`);
+      // Напіввідкриті інтервали [startDate, endDate) і [bookedStart, bookedEnd)
+      // дозволяють заїзд у день виїзду попереднього гостя.
+      if (startDate < bookedEnd && endDate > bookedStart) {
+        setDateError(`Цей період перетинається з уже заброньованим (${bookedStart.toLocaleDateString('uk-UA')} - ${bookedEnd.toLocaleDateString('uk-UA')})`);
         return false;
       }
     }
     
     return true;
   };
-
+  
   const handleBookingClick = () => {
     if (validateDates()) {
       setIsBookingOpen(true);
@@ -244,6 +241,9 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
               {apartment.availability.booked.length} заброньованих періодів
             </span>
           </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Заїзд з 14:00, виїзд до 12:00
+          </p>
         </div>
 
         {/* Выбор гостей */}

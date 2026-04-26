@@ -51,8 +51,9 @@ model Apartment {
   amenities     String[]
 
 
-  availability  Json?      
-  bookings      Booking[]
+  availability    Json?      
+  bookings        Booking[]
+  bookingRequests BookingRequest[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -90,6 +91,34 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
+}
+
+enum BookingRequestStatus {
+  NEW
+  CALLED
+  CONFIRMED
+  REJECTED
+}
+
+model BookingRequest {
+  id            String               @id @default(cuid())
+  bookingNumber String               @unique
+  apartment     Apartment            @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  apartmentId   String
+
+  phone         String
+  comment       String?
+  guests        Int
+  nights        Int
+  checkIn       DateTime
+  checkOut      DateTime
+  totalPrice    Float
+
+  status        BookingRequestStatus @default(NEW)
+  calledAt      DateTime?
+  processedAt   DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 }
 
 // Отзывы на главной — по твоему Comment из CommentsDataTypes.ts

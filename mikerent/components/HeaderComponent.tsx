@@ -7,22 +7,25 @@ export const HeaderComponent = () => {
   return (
     <header className="bg-main">
       <div className="container flex items-center justify-between">
-        <Link
-          href="/"
-          className="
-      flex
-      h-[68px]
-      w-[150px]
-      items-center
-      text-4xl
-      font-bold
-      tracking-tight
-      text-white
-      select-none
-  "
-        >
-          MikeRent
-        </Link>
+      <Link
+        href="/"
+        className="
+          flex
+          h-10
+          sm:h-[68px]
+          w-20
+          sm:w-[150px]
+          items-center
+          text-xl
+          sm:text-4xl
+          font-bold
+          tracking-tight
+          text-white
+          select-none
+        "
+      >
+        MikeRent
+      </Link>
         <Link href="/favorites" aria-label="Обрані квартири">
           <div
             className="

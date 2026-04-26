@@ -3,17 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Apartment, ApartmentType } from "@/data/ApartmentsTypes";
 import { ApartmentCard } from "./ApartmentCardComponent";
-import { ButtonFilterApartments } from "../buttons/ButtonFilterComponent";
 import { DateRange } from "../SeasonCalendarComponent";
 
 type Props = {
   apartments: Apartment[];
   guests: number;
   dateRange: DateRange;
+  typeFilter?: ApartmentType | null;
 };
 
-export const ApartmentsGrid = ({ apartments, guests, dateRange }: Props) => {
-  const [typeFilter, setTypeFilter] = useState<ApartmentType | null>(null);
+export const ApartmentsGrid = ({
+  apartments,
+  guests,
+  dateRange,
+  typeFilter = null,
+}: Props) => {
   const [itemsPerLoad, setItemsPerLoad] = useState(8);
   const [visibleCount, setVisibleCount] = useState(8);
 
@@ -77,11 +81,6 @@ export const ApartmentsGrid = ({ apartments, guests, dateRange }: Props) => {
 
   return (
     <>
-      {/* Фильтр по типу  */}
-      <div className="mb-6">
-        <ButtonFilterApartments value={typeFilter} onChange={setTypeFilter} />
-      </div>
-
       {/* Результат */}
       {filteredApartments.length === 0 ? (
         <div className="py-12 text-center text-gray-500">

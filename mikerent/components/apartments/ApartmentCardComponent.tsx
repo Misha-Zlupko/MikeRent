@@ -161,7 +161,7 @@ export const ApartmentCard = ({ apartment }: Props) => {
             </p>
 
             <p className="text-xs sm:text-sm text-gray-500">
-              {apartment.guests} гостей · {apartment.bedrooms} спалень ·{" "}
+              {apartment.guests} гостей ·{" "}
               {apartment.beds} ліжка
             </p>
           </div>

@@ -13,7 +13,7 @@ import {
 import { SeasonCalendar, DateRange } from "../SeasonCalendarComponent";
 import { formatDateRange, getMobileSearchLabel } from "./utils";
 import { OpenSection } from "./SearchFormComponent";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type GuestRow = [
   label: string,
@@ -61,6 +61,23 @@ export const MobileSearch = ({
     ["Дітей", localChildren, setLocalChildren, 0],
   ];
 
+  useEffect(() => {
+    if (!openMobile) return;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [openMobile]);
+
   return (
     <div className="sm:hidden w-full">
 <button
@@ -74,14 +91,14 @@ export const MobileSearch = ({
 </button>
 
       {openMobile && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
-          <div className="h-14 px-4 flex items-center gap-3 border-b">
+        <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-hidden">
+          <div className="h-14 px-4 flex items-center gap-3 border-b pt-[env(safe-area-inset-top)] shrink-0">
             <button onClick={() => setOpenMobile(false)}>
               <ArrowLeft className="h-5 w-5" />
             </button>
             <span className="font-semibold text-base">Пошук</span>
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          <div className="flex-1 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3">
             <div className="rounded-xl border p-4">
               <span className="text-xs text-muted">Де</span>
               <div className="flex items-center gap-2 mt-1 font-medium select-none">

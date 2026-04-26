@@ -5,6 +5,12 @@ import { cookies } from "next/headers";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
+function withUtcHour(value: unknown, hour: number) {
+  const date = new Date(String(value));
+  date.setUTCHours(hour, 0, 0, 0);
+  return date;
+}
+
 async function verifyAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
@@ -56,8 +62,8 @@ export async function POST(req: Request) {
     const booking = await prisma.booking.create({
       data: {
         apartmentId: data.apartmentId,
-        dateFrom: new Date(data.dateFrom),
-        dateTo: new Date(data.dateTo),
+        dateFrom: withUtcHour(data.dateFrom, 14),
+        dateTo: withUtcHour(data.dateTo, 12),
 
         // Інформація про гостя
         guestName: data.guestName,

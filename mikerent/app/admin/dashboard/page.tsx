@@ -2,16 +2,28 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Home, Calendar, Users, PlusCircle } from "lucide-react";
+import { Home, Calendar, Users, PlusCircle, ClipboardList } from "lucide-react";
 
 export default async function AdminDashboard() {
   const adminEmail =
     process.env.ADMIN_EMAIL?.trim() || "admin@mikerent.com";
+  const prismaAny = prisma as typeof prisma & {
+    bookingRequest: {
+      count: (args: unknown) => Promise<number>;
+    };
+  };
 
   // Отримуємо статистику з бази даних
-  const [apartmentsCount, bookingsCount, recentBookings] = await Promise.all([
+  const [apartmentsCount, bookingsCount, requestsCount, recentBookings] = await Promise.all([
     prisma.apartment.count(),
     prisma.booking.count(),
+    prismaAny.bookingRequest.count({
+      where: {
+        status: {
+          in: ["NEW", "CALLED"],
+        },
+      },
+    }),
     prisma.booking.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
@@ -44,7 +56,7 @@ export default async function AdminDashboard() {
       {/* Головний контент */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Статистика */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {/* Картка: Квартири */}
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -61,6 +73,24 @@ export default async function AdminDashboard() {
               className="text-sm text-blue-600 hover:text-blue-800 hover:underline mt-2 inline-block"
             >
               Керувати квартирами →
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-amber-100 rounded-full">
+                <ClipboardList className="w-6 h-6 text-amber-600" />
+              </div>
+              <span className="text-3xl font-bold text-amber-600">
+                {requestsCount}
+              </span>
+            </div>
+            <h3 className="text-gray-600 font-medium">Заявки на бронювання</h3>
+            <Link
+              href="/admin/booking-requests"
+              className="text-sm text-amber-600 hover:text-amber-800 hover:underline mt-2 inline-block"
+            >
+              Відкрити заявки →
             </Link>
           </div>
 

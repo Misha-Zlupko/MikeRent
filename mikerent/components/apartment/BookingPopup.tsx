@@ -72,180 +72,46 @@ export const BookingPopup = ({
 
     try {
       const nights = calculateNights();
-      const generatedBookingId = `BK${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 100)}`;
-
-      // Создаем объект бронирования
-      const bookingData = {
-        phone: phone.replace(/\s/g, ""),
-        comment: comment || "Без коментаря",
+      const payload = {
         apartmentId,
         apartmentTitle,
-        pricePerNight,
+        phone: phone.replace(/\s/g, ""),
+        comment: comment || "",
         guests,
         nights,
-        checkIn: new Date(checkIn).toLocaleDateString("uk-UA"),
-        checkOut: new Date(checkOut).toLocaleDateString("uk-UA"),
+        checkIn,
+        checkOut,
+        pricePerNight,
         totalPrice,
-        bookingId: generatedBookingId,
-        createdAt: new Date().toISOString(),
-        status: "pending",
       };
 
-      console.log("📤 Отправка данных бронирования:", bookingData);
-
-      // Сохраняем в localStorage для истории
-      try {
-        const existingBookings = JSON.parse(
-          localStorage.getItem("apartmentBookings") || "[]",
-        );
-        localStorage.setItem(
-          "apartmentBookings",
-          JSON.stringify([...existingBookings, bookingData]),
-        );
-        console.log("✅ Сохранено в localStorage");
-      } catch (storageError) {
-        console.warn("⚠️ Ошибка сохранения в localStorage:", storageError);
-      }
-
-      // СНАЧАЛА протестируем с debug endpoint
-      console.log("🔄 Тестируем подключение к API...");
-
-      const testResponse = await fetch("/api/debug", {
+      const response = await fetch("/api/booking-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test: true, phone: bookingData.phone }),
+        body: JSON.stringify(payload),
       });
 
-      const testResult = await testResponse.json();
-      console.log("🔍 Тестовый ответ API:", testResult);
-
-      if (!testResponse.ok) {
-        throw new Error(`Тестовый API не отвечает: ${testResponse.status}`);
-      }
-
-      // Теперь отправляем в реальный endpoint
-      console.log("🔄 Отправляем в Telegram API...");
-      const response = await fetch("/api/telegram/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingData),
-      });
-
-      console.log("📥 Получен ответ:", {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries()),
-      });
-
-      let result;
-      try {
-        // Пробуем получить текст
-        const responseText = await response.text();
-        console.log("📄 Текст ответа:", responseText);
-
-        if (responseText) {
-          // Пробуем распарсить как JSON
-          try {
-            result = JSON.parse(responseText);
-            console.log("📊 JSON ответ:", result);
-          } catch (jsonError) {
-            console.error("❌ Ошибка парсинга JSON:", jsonError);
-            console.error("❌ Сырой текст:", responseText);
-
-            // Если не JSON, значит сервер вернул HTML страницу (например, 404)
-            if (responseText.includes("<!DOCTYPE")) {
-              throw new Error(
-                "Сервер вернул HTML вместо JSON. Возможно, неправильный URL API.",
-              );
-            }
-
-            throw new Error(
-              `Некорректный ответ сервера: ${responseText.substring(0, 100)}...`,
-            );
-          }
-        } else {
-          console.warn("⚠️ Пустой ответ от сервера");
-          result = {};
-        }
-      } catch (parseError: any) {
-        console.error("❌ Ошибка обработки ответа:", parseError);
-        throw new Error(
-          `Ошибка обработки ответа сервера: ${parseError.message}`,
-        );
-      }
-
-      // Проверяем статус ответа
+      const result = await response.json();
       if (!response.ok) {
-        const errorMessage =
-          result?.error ||
-          result?.message ||
-          result?.details ||
-          `Ошибка сервера: ${response.status} ${response.statusText}`;
-        console.error("❌ Ошибка API:", errorMessage);
-        throw new Error(errorMessage);
+        throw new Error(result?.error || "Не вдалося створити заявку");
       }
 
-      // Проверяем структуру успешного ответа
-      if (!result.success && !result.bookingId) {
-        console.warn("⚠️ Неожиданная структура ответа:", result);
-      }
-
-      console.log("✅ Заявка успешно отправлена!");
-
-      // Показываем успех
       setIsSuccess(true);
-      setBookingId(generatedBookingId);
-
-      // Сбрасываем форму
-      setPhone("");
-      setComment("");
+      setBookingId(result.bookingNumber || "");
 
       // Автоматически закрываем через 8 секунд
       const closeTimer = setTimeout(() => {
         onClose();
         setIsSuccess(false);
         setBookingId("");
+        setPhone("");
+        setComment("");
       }, 8000);
 
       // Очищаем таймер при размонтировании
       return () => clearTimeout(closeTimer);
     } catch (err: any) {
-      console.error("❌ Ошибка бронирования:", err);
-
-      // Детализированные сообщения об ошибках
-      let userErrorMessage = "Щось пішло не так. Спробуйте ще раз.";
-
-      if (err.message.includes("404")) {
-        userErrorMessage =
-          "API endpoint не найден. Пожалуйста, сообщите администратору.";
-      } else if (err.message.includes("500")) {
-        userErrorMessage = "Ошибка на сервере. Мы уже работаем над этим.";
-      } else if (
-        err.message.includes("NetworkError") ||
-        err.message.includes("Failed to fetch")
-      ) {
-        userErrorMessage =
-          "Проблемы с интернет-соединением. Проверьте подключение к сети.";
-      } else if (err.message.includes("HTML вместо JSON")) {
-        userErrorMessage =
-          "Конфигурационная ошибка сервера. Администратор уведомлен.";
-      } else if (err.message) {
-        // Обрезаем слишком длинные сообщения
-        userErrorMessage =
-          err.message.length > 100
-            ? `${err.message.substring(0, 100)}...`
-            : err.message;
-      }
-
-      setError(userErrorMessage);
-
-      // Показываем кнопку для ручной отправки
-      setTimeout(() => {
-        if (error.includes("администратор")) {
-          console.log("📞 Рекомендуется связаться с администратором");
-        }
-      }, 100);
+      setError(err?.message || "Щось пішло не так. Спробуйте ще раз.");
     } finally {
       setIsLoading(false);
     }
@@ -418,16 +284,13 @@ export const BookingPopup = ({
                     )}
                   </button>
 
-                  <div className="rounded-lg bg-blue-50 p-3 border border-blue-200">
+                <div className="rounded-lg bg-blue-50 p-3 border border-blue-200">
                     <p className="text-xs text-blue-700">
                       📱{" "}
                       <span className="font-medium">
-                        Заявка буде відправлена в Telegram-бота
+                        Заявка буде створена в адмін-панелі
                       </span>
-                      <br />⏰ Менеджер отримає сповіщення миттєво
-                    </p>
-                    <p className="text-xs text-blue-600 mt-2">
-                      Тестовый режим: проверка API подключения включена
+                      <br />⏰ Менеджер побачить її в розділі заявок
                     </p>
                   </div>
 

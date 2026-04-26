@@ -60,8 +60,15 @@ export const SeasonDatePicker = ({
   ];
   
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+
+  const formatLocalDate = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
   
-  // Проверка, забронирована ли дата
+  // Дата недоступна для нового ЗАЇЗДУ
   const isDateBooked = (date: Date): boolean => {
     const checkDate = new Date(date);
     checkDate.setHours(0, 0, 0, 0);
@@ -70,9 +77,27 @@ export const SeasonDatePicker = ({
       const start = new Date(booking.from);
       const end = new Date(booking.to);
       start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
+      end.setHours(0, 0, 0, 0);
       
-      return checkDate >= start && checkDate <= end;
+      // Напіввідкритий інтервал [start, end):
+      // день виїзду НЕ блокуємо для нового заїзду.
+      return checkDate >= start && checkDate < end;
+    });
+  };
+
+  // Для візуального червоного фону фарбуємо тільки "повні" зайняті дні
+  // (без дня заїзду і дня виїзду)
+  const isDateFullyBookedVisual = (date: Date): boolean => {
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
+    return bookedDates.some((booking) => {
+      const start = new Date(booking.from);
+      const end = new Date(booking.to);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+
+      return checkDate > start && checkDate < end;
     });
   };
   
@@ -96,6 +121,43 @@ export const SeasonDatePicker = ({
     if (!SEASON_MONTHS.includes(month)) return false;
     
     return !isDateBooked(date) && !isDateInPast(date);
+  };
+
+  const hasOverlapWithBooked = (start: Date, end: Date): boolean => {
+    return bookedDates.some((booking) => {
+      const bookedStart = new Date(booking.from);
+      const bookedEnd = new Date(booking.to);
+      bookedStart.setHours(0, 0, 0, 0);
+      bookedEnd.setHours(0, 0, 0, 0);
+
+      // Перетин напіввідкритих інтервалів [start, end) та [bookedStart, bookedEnd)
+      return start < bookedEnd && end > bookedStart;
+    });
+  };
+
+  const canSelectDate = (date: Date): boolean => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    if (year !== SEASON_YEAR) return false;
+    if (!SEASON_MONTHS.includes(month)) return false;
+    if (isDateInPast(date)) return false;
+
+    // Якщо ще не обрано заїзд — це вибір дати заїзду, тут дата має бути вільною.
+    if (!selectedDates.checkIn || selectedDates.checkOut) {
+      return !isDateBooked(date);
+    }
+
+    // Якщо обираємо виїзд:
+    // - дата виїзду має бути пізніше заїзду;
+    // - допускаємо виїзд у день початку чужої броні.
+    const checkInDate = new Date(selectedDates.checkIn);
+    checkInDate.setHours(0, 0, 0, 0);
+    const candidate = new Date(date);
+    candidate.setHours(0, 0, 0, 0);
+
+    if (candidate <= checkInDate) return true;
+
+    return !hasOverlapWithBooked(checkInDate, candidate);
   };
 
   const getMaxNightsInWindow = (anchorDate: Date): number => {
@@ -122,10 +184,10 @@ export const SeasonDatePicker = ({
   
   // Обработка клика по дате
   const handleDateClick = (date: Date) => {
-    if (!isDateAvailable(date)) return;
+    if (!canSelectDate(date)) return;
     setValidationError("");
     
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatLocalDate(date);
     
     // Если ничего не выбрано или выбираем новую начальную дату
     if (!selectedDates.checkIn || (selectedDates.checkIn && selectedDates.checkOut)) {
@@ -174,7 +236,7 @@ export const SeasonDatePicker = ({
   
   // Проверка, выбрана ли дата
   const isDateSelected = (date: Date): boolean => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatLocalDate(date);
     return dateString === selectedDates.checkIn || dateString === selectedDates.checkOut;
   };
   
@@ -182,7 +244,7 @@ export const SeasonDatePicker = ({
   const isDateBetween = (date: Date): boolean => {
     if (!selectedDates.checkIn || !selectedDates.checkOut) return false;
     
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatLocalDate(date);
     const checkInDate = new Date(selectedDates.checkIn);
     const checkOutDate = new Date(selectedDates.checkOut);
     const currentDate = new Date(dateString);
@@ -234,8 +296,8 @@ export const SeasonDatePicker = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 overflow-hidden">
-      <div className="w-full max-w-md mx-auto my-0 min-h-full flex items-center justify-center py-4 sm:py-8 px-3 sm:px-4">
-      <div className="relative w-full rounded-2xl bg-white shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] overflow-y-auto">
+      <div className="w-full max-w-md mx-auto my-0 min-h-full flex items-center justify-center py-[max(1rem,env(safe-area-inset-top))] sm:py-8 px-3 sm:px-4">
+      <div className="relative w-full rounded-2xl bg-white shadow-2xl max-h-[calc(100dvh-2.5rem)] sm:max-h-[calc(100dvh-4rem)] overflow-y-auto">
         {/* Заголовок */}
         <div className="flex items-center justify-between border-b border-gray-200 p-6">
           <div className="flex items-center gap-3">
@@ -292,8 +354,8 @@ export const SeasonDatePicker = ({
               return <div key={`empty-${index}`} className="h-10" />;
             }
             
-            const isAvailable = isDateAvailable(date);
-            const isBooked = isDateBooked(date);
+            const isAvailable = canSelectDate(date);
+            const isBooked = isDateFullyBookedVisual(date);
             const isSelected = isDateSelected(date);
             const isBetween = isDateBetween(date);
             const isToday = date.toDateString() === new Date().toDateString();
@@ -322,7 +384,7 @@ export const SeasonDatePicker = ({
                 className={className}
                 onMouseEnter={() => {
                   if (isAvailable && selectedDates.checkIn && !selectedDates.checkOut) {
-                    setHoveredDate(date.toISOString().split('T')[0]);
+                    setHoveredDate(formatLocalDate(date));
                   }
                 }}
               >
@@ -364,7 +426,7 @@ export const SeasonDatePicker = ({
         </div>
 
         {/* Статус выбора */}
-        <div className="border-t border-gray-200 p-6">
+        <div className="border-t border-gray-200 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           {validationError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {validationError}
@@ -414,7 +476,8 @@ export const SeasonDatePicker = ({
                     <p className="text-sm text-blue-600">
                       1. Оберіть дату заїзду<br />
                       2. Оберіть дату виїзду<br />
-                      3. Червоним позначені заброньовані дати
+                      3. Червоним позначені заброньовані дати<br />
+                      4. Заїзд з 14:00, виїзд до 12:00
                     </p>
                   </div>
                 </div>

@@ -6,6 +6,7 @@ import { SeasonCalendar, DateRange } from "../SeasonCalendarComponent";
 import { formatDateRange } from "./utils";
 import { OpenSection } from "./SearchFormComponent";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 type GuestRow = [
   label: string,
@@ -44,7 +45,9 @@ export const DesktopSearch = ({
 
   const totalGuests = localAdults + localChildren;
   const whenRef = useRef<HTMLDivElement | null>(null);
+  const whenTriggerRef = useRef<HTMLDivElement | null>(null);
   const whoRef = useRef<HTMLDivElement | null>(null);
+  const [whenCoords, setWhenCoords] = useState<{ top: number; left: number } | null>(null);
 
   const guestRows: GuestRow[] = [
     ["Дорослих", localAdults, setLocalAdults, 1],
@@ -78,9 +81,31 @@ export const DesktopSearch = ({
     };
   }, [openSection, setOpenSection]);
 
+  useEffect(() => {
+    if (openSection !== "when") return;
+
+    const updatePosition = () => {
+      if (!whenTriggerRef.current) return;
+      const rect = whenTriggerRef.current.getBoundingClientRect();
+      setWhenCoords({
+        top: rect.bottom + 12,
+        left: rect.left + rect.width / 2,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [openSection]);
+
   return (
-    <div className="hidden sm:block w-full max-w-[820px]">
-      <form className="flex items-center rounded-full bg-[#f1f1f1] p-2 shadow-md">
+    <div className="hidden sm:block w-full max-w-[820px] relative z-[60] overflow-visible">
+      <form className="relative z-[60] overflow-visible flex items-center rounded-full bg-[#f1f1f1] p-2 shadow-md">
         <div className="flex flex-col px-4 py-2 flex-1 rounded-full transition cursor-default">
           <span className="text-xs font-semibold text-muted">Де</span>
           <div className="flex items-center gap-2 select-none">
@@ -91,7 +116,7 @@ export const DesktopSearch = ({
 
         <div className="h-8 w-px bg-border" />
 
-        <div className="relative flex-1">
+        {/* <div className="relative flex-1">
           <div
             onClick={() =>
               setOpenSection(openSection === "when" ? null : "when")
@@ -117,8 +142,36 @@ export const DesktopSearch = ({
               />
             </div>
           )}
-        </div>
+        </div> */}
+<div className="relative flex-1 overflow-visible">
+  <div
+    ref={whenTriggerRef}
+    onClick={() => setOpenSection(openSection === "when" ? null : "when")}
+    className={`px-5 py-3 rounded-full mx-1 cursor-pointer transition flex flex-col ${
+      openSection === "when" ? "bg-white shadow-sm" : "hover:bg-white"
+    }`}
+  >
+    <span className="text-xs font-semibold text-muted">Коли</span>
+    <span className="font-medium truncate">
+      {formatDateRange(localDateRange)}
+    </span>
+  </div>
 
+  {/* Календар */}
+  {openSection === "when" &&
+    whenCoords &&
+    typeof window !== "undefined" &&
+    createPortal(
+      <div
+        ref={whenRef}
+        className="fixed -translate-x-1/2 z-[200] rounded-2xl bg-white p-4 md:p-6 shadow-2xl border border-gray-100 w-max max-w-[min(92vw,760px)] overflow-visible"
+        style={{ top: whenCoords.top, left: whenCoords.left }}
+      >
+        <SeasonCalendar value={localDateRange} onChange={setLocalDateRange} />
+      </div>,
+      document.body,
+    )}
+</div>
         <div className="h-8 w-px bg-border" />
         <div className="relative flex-1">
           <div
@@ -134,7 +187,7 @@ export const DesktopSearch = ({
           {openSection === "who" && (
             <div
               ref={whoRef}
-              className="absolute right-0 top-[calc(100%+12px)] z-50 w-[360px] rounded-2xl bg-white p-6 shadow-xl"
+              className="absolute right-0 top-[calc(100%+12px)] z-[80] w-[360px] rounded-2xl bg-white p-6 shadow-2xl border border-gray-100"
             >
               <div className="space-y-4">
                 {guestRows.map(([label, value, setter, min]) => (
