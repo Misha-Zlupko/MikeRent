@@ -1,7 +1,7 @@
 // components/calendar/SeasonDatePicker.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -35,6 +35,21 @@ export const SeasonDatePicker = ({
   });
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string>("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [isOpen]);
   
   const SEASON_YEAR = 2026;
   const SEASON_MONTHS = [5, 6, 7, 8]; // Июнь, Июль, Август, Сентябрь (0-indexed)
@@ -218,8 +233,9 @@ export const SeasonDatePicker = ({
   const days = generateDays(currentMonth);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/50 overflow-hidden">
+      <div className="w-full max-w-md mx-auto my-0 min-h-full flex items-center justify-center py-4 sm:py-8 px-3 sm:px-4">
+      <div className="relative w-full rounded-2xl bg-white shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] overflow-y-auto">
         {/* Заголовок */}
         <div className="flex items-center justify-between border-b border-gray-200 p-6">
           <div className="flex items-center gap-3">
@@ -382,7 +398,7 @@ export const SeasonDatePicker = ({
                 </button>
                 <button
                   onClick={handleApply}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800"
+                  className="flex-1 px-4 py-3 bg-sky-600 text-white rounded-lg font-semibold hover:bg-sky-700"
                 >
                   Застосувати
                 </button>
@@ -414,7 +430,7 @@ export const SeasonDatePicker = ({
                 <button
                   onClick={handleApply}
                   disabled={!selectedDates.checkIn || !selectedDates.checkOut}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50"
+                  className="flex-1 px-4 py-3 bg-sky-600 text-white rounded-lg font-semibold hover:bg-sky-700 disabled:opacity-50"
                 >
                   Застосувати
                 </button>
@@ -422,6 +438,7 @@ export const SeasonDatePicker = ({
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

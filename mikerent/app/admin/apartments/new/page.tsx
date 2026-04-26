@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Link as LinkIcon, X, Calendar, Plus } from "lucide-react";
@@ -96,6 +96,43 @@ export default function NewApartmentPage() {
     if (imageUrlInput.trim() && !images.includes(imageUrlInput.trim())) {
       setImages([...images, imageUrlInput.trim()]);
       setImageUrlInput("");
+    }
+  };
+
+  // Додати фото з комп'ютера (зберігаємо як base64 у images[])
+  const addImageFiles = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const maxSizeMb = 8;
+    const toDataUrl = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Не вдалося прочитати файл"));
+        reader.readAsDataURL(file);
+      });
+
+    try {
+      const prepared: string[] = [];
+      for (const file of files) {
+        if (!file.type.startsWith("image/")) continue;
+        if (file.size > maxSizeMb * 1024 * 1024) {
+          alert(`Файл ${file.name} більший за ${maxSizeMb}MB і пропущений`);
+          continue;
+        }
+        const dataUrl = await toDataUrl(file);
+        prepared.push(dataUrl);
+      }
+
+      if (prepared.length > 0) {
+        setImages((prev) => [...prev, ...prepared]);
+      }
+    } catch {
+      alert("Помилка читання файлу");
+    } finally {
+      // Дозволяє вибрати ті самі файли повторно
+      e.target.value = "";
     }
   };
 
@@ -321,6 +358,22 @@ export default function NewApartmentPage() {
             <h2 className="text-lg font-semibold mb-4">Фотографії</h2>
 
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Завантажити з комп'ютера
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={addImageFiles}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Фото зберігаються в БД у форматі base64 (до 8MB на файл).
+                </p>
+              </div>
+
               {/* Поле для введення посилання */}
               <div className="flex gap-2">
                 <input

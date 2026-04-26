@@ -61,23 +61,22 @@ export const CustomerComments = () => {
                 hover:shadow-1xl
               "
             >
-              {/* HEADER */}
               <div className="mb-2 flex items-center gap-4">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-white">
+                {/* <div className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-white">
                   <Image
                     src={comment.avatar}
                     alt={comment.name}
                     fill
                     className="object-cover"
                   />
-                </div>
+                </div> */}
 
                 <div>
                   <p className="font-semibold text-gray-900">{comment.name}</p>
 
-                  <p className="text-xs text-gray-500">
+                  {/* <p className="text-xs text-gray-500">
                     {formatDate(comment.date)}
-                  </p>
+                  </p> */}
 
                   <div className="mt-1 flex text-yellow-400">
                     {Array.from({ length: 5 }).map((_, i) => (

@@ -63,15 +63,15 @@ export const MobileSearch = ({
 
   return (
     <div className="sm:hidden w-full">
-      <button
-        onClick={() => setOpenMobile(true)}
-        className="w-full h-12 rounded-full bg-main text-white flex items-center gap-2 px-4"
-      >
-        <Search className="h-5 w-5" />
-        <span className="truncate text-sm font-medium">
-          {getMobileSearchLabel(localDateRange, totalGuests)}
-        </span>
-      </button>
+<button
+  onClick={() => setOpenMobile(true)}
+  className="w-full h-12 rounded-full bg-white border-2 border-blue-500 text-blue-600 flex items-center gap-2 px-4"
+>
+  <Search className="h-5 w-5 text-blue-600" />
+  <span className="truncate text-sm font-medium">
+    {getMobileSearchLabel(localDateRange, totalGuests)}
+  </span>
+</button>
 
       {openMobile && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
