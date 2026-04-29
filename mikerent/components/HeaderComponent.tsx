@@ -29,7 +29,7 @@ export const HeaderComponent = () => {
         <Link href="/favorites" aria-label="Обрані квартири">
           <div
             className="
-      flex h-14 w-14 items-center justify-center
+      flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center
       rounded-full
       transition
       hover:bg-white/15
@@ -38,7 +38,7 @@ export const HeaderComponent = () => {
           >
             <Heart
               className={`
-        h-8 w-8
+        h-6 w-6 sm:h-7 sm:w-7
         text-white
         transition-all
         ${

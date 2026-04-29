@@ -1,13 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { SearchForm } from "@/components/search/SearchFormComponent";
 import { ApartmentsGrid } from "@/components/apartments/ApartmentsGridComponent";
-import { CustomerComments } from "@/components/СustomerСommentsComponent";
 import type { Apartment } from "@/data/ApartmentsTypes";
 import type { ApartmentType } from "@/data/ApartmentsTypes";
 import type { DateRange as CalendarDateRange } from "@/components/SeasonCalendarComponent";
 import { ButtonFilterApartments } from "@/components/buttons/ButtonFilterComponent";
+
+const CustomerComments = dynamic(
+  () =>
+    import("@/components/СustomerСommentsComponent").then(
+      (m) => m.CustomerComments,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="container py-10 text-center text-sm text-gray-400">
+        Завантаження відгуків...
+      </div>
+    ),
+  },
+);
 
 type DateRange = {
   from: Date | null;

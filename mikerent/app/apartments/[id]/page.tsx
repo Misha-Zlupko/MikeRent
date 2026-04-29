@@ -1,6 +1,8 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
+import { cache } from "react";
 import { ApartmentHeader } from "@/components/apartment/ApartmentHeaderComponent";
 import { ApartmentGallery } from "@/components/apartment/ApartmentGalleryComponent";
 import { ApartmentContent } from "@/components/apartment/ApartmentContentComponent";
@@ -11,14 +13,70 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+const getApartmentById = cache(async (id: string) => {
+  return prisma.apartment.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      city: true,
+      address: true,
+      description: true,
+      images: true,
+      mapUrl: true,
+      pricePerNight: true,
+      guests: true,
+      bedrooms: true,
+      beds: true,
+      bathrooms: true,
+      amenities: true,
+      bookings: {
+        select: {
+          dateFrom: true,
+          dateTo: true,
+        },
+      },
+    },
+  });
+});
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const apartment = await getApartmentById(id);
+
+  if (!apartment) {
+    return {
+      title: "Квартира не знайдена",
+      description: "Схоже, ця сторінка більше не доступна.",
+    };
+  }
+
+  const pageTitle = `${apartment.title} - подобова оренда в ${apartment.city}`;
+  const pageDescription =
+    apartment.description?.slice(0, 160) ||
+    `Оренда житла: ${apartment.title}, ${apartment.address}, ${apartment.city}.`;
+
+  return {
+    title: pageTitle,
+    description: pageDescription,
+    alternates: {
+      canonical: `/apartments/${id}`,
+    },
+    openGraph: {
+      title: pageTitle,
+      description: pageDescription,
+      type: "article",
+      url: `/apartments/${id}`,
+      images: apartment.images?.[0]
+        ? [{ url: apartment.images[0], alt: apartment.title }]
+        : undefined,
+    },
+  };
+}
+
 export default async function ApartmentPage({ params }: PageProps) {
   const { id } = await params;
-
-
-  const apartment = await prisma.apartment.findUnique({
-    where: { id },
-    include: { bookings: true },
-  });
+  const apartment = await getApartmentById(id);
 
   if (!apartment) {
     return null;

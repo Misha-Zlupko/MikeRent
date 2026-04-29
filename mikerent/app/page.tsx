@@ -1,12 +1,43 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 import type { Apartment, DateRangeISO } from "@/data/ApartmentsTypes";
 import { HomeClient } from "@/components/HomeClient";
 
+export const metadata: Metadata = {
+  title: "Подобова оренда житла у місті Чорноморськ",
+  description:
+    "Знайдіть та забронюйте квартиру, будинок або кімнату в Чорноморську. Реальні фото, актуальні ціни та швидке підтвердження.",
+  alternates: {
+    canonical: "/",
+  },
+};
+
 async function getApartments(): Promise<Apartment[]> {
   const dbApartments = await prisma.apartment.findMany({
-    include: { bookings: true },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      city: true,
+      address: true,
+      pricePerNight: true,
+      guests: true,
+      bedrooms: true,
+      beds: true,
+      bathrooms: true,
+      images: true,
+      description: true,
+      mapUrl: true,
+      amenities: true,
+      bookings: {
+        select: {
+          dateFrom: true,
+          dateTo: true,
+        },
+      },
+    },
   });
 
   return dbApartments.map((a) => ({

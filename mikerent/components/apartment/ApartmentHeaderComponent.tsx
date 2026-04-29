@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 type Props = {
   apartment: {
@@ -12,6 +13,13 @@ type Props = {
 export const ApartmentHeader = ({ apartment }: Props) => {
   return (
     <div className="mb-6">
+      <Link
+        href="/"
+        className="mb-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+      >
+        <ArrowLeft size={16} />
+        На головну
+      </Link>
       <h1 className="text-2xl sm:text-3xl font-bold">{apartment.title}</h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
         <Link
