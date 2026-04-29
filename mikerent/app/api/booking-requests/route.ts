@@ -23,6 +23,39 @@ function withUtcHour(date: Date, hour: number) {
   return next;
 }
 
+async function sendTelegramBookingNotification(params: {
+  token: string;
+  chatId: string;
+  message: string;
+}) {
+  const url = `https://api.telegram.org/bot${params.token}/sendMessage`;
+
+  const sendOnce = async () => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: params.chatId,
+        text: params.message,
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    return { response, payload };
+  };
+
+  // Простий ретрай на випадок тимчасової помилки Telegram API
+  let result = await sendOnce();
+  if (!result.response.ok) {
+    result = await sendOnce();
+  }
+
+  if (!result.response.ok) {
+    throw new Error(
+      `Telegram API error: ${result.response.status} ${JSON.stringify(result.payload)}`,
+    );
+  }
+}
+
 // POST /api/booking-requests
 export async function POST(req: Request) {
   try {
@@ -67,6 +100,8 @@ export async function POST(req: Request) {
     const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+    let telegramSent = false;
+
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
       const message = `
 📞 НОВА ЗАЯВКА НА БРОНЮВАННЯ
@@ -86,19 +121,27 @@ export async function POST(req: Request) {
 💰 Сума: ${bookingRequest.totalPrice} ₴
       `.trim();
 
-      void fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message }),
-      }).catch((error) => {
+      try {
+        await sendTelegramBookingNotification({
+          token: TELEGRAM_BOT_TOKEN,
+          chatId: TELEGRAM_CHAT_ID,
+          message,
+        });
+        telegramSent = true;
+      } catch (error) {
         console.error("Telegram notify error:", error);
-      });
+      }
+    } else {
+      console.warn(
+        "Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing",
+      );
     }
 
     return NextResponse.json(
       {
         success: true,
         bookingNumber: bookingRequest.bookingNumber,
+        telegramSent,
       },
       { status: 201 },
     );
