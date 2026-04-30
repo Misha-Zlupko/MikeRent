@@ -91,8 +91,8 @@ export const ApartmentGallery = ({ apartment }: Props) => {
   const images = apartment.images;
 
   return (
-    <div className="mb-8">
-      <div className="relative rounded-2xl overflow-hidden shadow-lg">
+    <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+      <div className="relative overflow-hidden rounded-xl">
         <Swiper
           loop
           navigation={{
@@ -132,7 +132,7 @@ export const ApartmentGallery = ({ apartment }: Props) => {
 
       {/* Миниатюры */}
       {images.length > 1 && (
-        <div className="mt-4">
+        <div className="mt-3">
           <Swiper
             onSwiper={setThumbsSwiper}
             spaceBetween={8}
@@ -164,7 +164,7 @@ export const ApartmentGallery = ({ apartment }: Props) => {
       )}
 
       {/* Кнопки действий */}
-      <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
+      <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
   <button
     onClick={toggleFavorite}
     className="

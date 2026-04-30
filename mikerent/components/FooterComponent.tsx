@@ -64,7 +64,7 @@ export const FooterComponent = () => {
           </div>
         </div>
         <div className="mt-5 text-center text-xs text-white/60">
-          © 2025 MikeRent. Всі права захищені.
+          © 2026 MikeRent. Всі права захищені.
         </div>
       </div>
     </footer>

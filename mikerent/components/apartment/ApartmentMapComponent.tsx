@@ -60,15 +60,15 @@ export const ApartmentMapComponent = ({ apartment }: Props) => {
   };
 
   return (
-    <div className="w-full rounded-xl overflow-hidden border border-gray-200">
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="font-semibold mb-1">Розташування</h3>
-        <p className="text-gray-600 text-sm">
+    <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 bg-slate-50 p-4 sm:p-5">
+        <h3 className="mb-1 text-base font-semibold text-slate-900">Розташування</h3>
+        <p className="text-sm text-slate-600">
           {apartment.address || "Адреса не вказана"}
         </p>
       </div>
 
-      <div className="h-80">
+      <div className="h-72 sm:h-80">
         <iframe
           src={getEmbedUrl()}
           width="100%"
@@ -84,12 +84,12 @@ export const ApartmentMapComponent = ({ apartment }: Props) => {
 
       {/* 👇 ДОДАЄМО ПЕРЕВІРКУ */}
       {apartment.mapUrl && (
-        <div className="p-4 bg-gray-50 border-t border-gray-200">
+        <div className="border-t border-slate-200 bg-slate-50 p-4 sm:p-5">
           <Link
             href={apartment.mapUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1"
+            className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
           >
             Відкрити в Google Maps
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

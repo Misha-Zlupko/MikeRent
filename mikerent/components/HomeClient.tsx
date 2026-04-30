@@ -107,6 +107,7 @@ export function HomeClient({ apartments }: Props) {
     </div>
   </div>
 </section>
+        
       <section className="container mb-8">
         <ApartmentsGrid
           apartments={apartments}
@@ -121,4 +122,3 @@ export function HomeClient({ apartments }: Props) {
     </main>
   );
 }
-

@@ -82,9 +82,10 @@ export default async function ApartmentPage({ params }: PageProps) {
     return null;
   }
   return (
-    <main className="container py-8">
-      <section className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-        <div className="lg:col-span-7 space-y-8">
+    <main className="bg-gradient-to-b from-slate-50 to-white">
+      <section className="container py-6 sm:py-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-10 lg:gap-8">
+          <div className="space-y-6 lg:col-span-7">
           <ApartmentHeader
             apartment={{
               id: apartment.id,
@@ -116,24 +117,25 @@ export default async function ApartmentPage({ params }: PageProps) {
               amenities: apartment.amenities ?? [],
             }}
           />
-        </div>
+          </div>
 
-        <aside className="lg:col-span-3">
-          <ApartmentBookingCard
-            apartment={{
-              id: apartment.id,
-              title: apartment.title,
-              pricePerNight: apartment.pricePerNight,
-              guests: apartment.guests,
-              availability: {
-                booked: apartment.bookings.map((b) => ({
-                  from: b.dateFrom.toISOString().slice(0, 10),
-                  to: b.dateTo.toISOString().slice(0, 10),
-                })),
-              },
-            }}
-          />
-        </aside>
+          <aside className="lg:col-span-3">
+            <ApartmentBookingCard
+              apartment={{
+                id: apartment.id,
+                title: apartment.title,
+                pricePerNight: apartment.pricePerNight,
+                guests: apartment.guests,
+                availability: {
+                  booked: apartment.bookings.map((b) => ({
+                    from: b.dateFrom.toISOString().slice(0, 10),
+                    to: b.dateTo.toISOString().slice(0, 10),
+                  })),
+                },
+              }}
+            />
+          </aside>
+        </div>
       </section>
     </main>
   );

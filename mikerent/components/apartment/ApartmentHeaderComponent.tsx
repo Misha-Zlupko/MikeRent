@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 
 type Props = {
   apartment: {
@@ -12,23 +12,35 @@ type Props = {
 
 export const ApartmentHeader = ({ apartment }: Props) => {
   return (
-    <div className="mb-6">
-      <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-      >
-        <ArrowLeft size={16} />
-        На головну
-      </Link>
-      <h1 className="text-2xl sm:text-3xl font-bold">{apartment.title}</h1>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+    <div className="mb-6 rounded-2xl border border-slate-200 bg-white/95 p-5 shadow-sm sm:p-6">
+      <div className="space-y-4">
         <Link
-          href={apartment.mapUrl || ""}
-          target="_blank"
-          className="underline underline-offset-2"
+          href="/"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
-          {apartment.address}
+          <ArrowLeft size={16} />
+          На головну
         </Link>
+
+        <h1 className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl md:text-4xl">
+          {apartment.title}
+        </h1>
+
+        <div className="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          <MapPin size={16} className="text-sky-600" />
+          {apartment.mapUrl ? (
+            <Link
+              href={apartment.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-slate-900 hover:underline"
+            >
+              {apartment.address}
+            </Link>
+          ) : (
+            <span>{apartment.address}</span>
+          )}
+        </div>
       </div>
     </div>
   );
