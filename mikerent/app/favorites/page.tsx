@@ -186,10 +186,7 @@ export default function FavoritesPage() {
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         <span className="text-sm font-medium text-gray-700">
-                          {apartment.rating}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          ({apartment.reviewsCount})
+                          {apartment.pricePerNight} ₴
                         </span>
                       </div>
                     </div>
