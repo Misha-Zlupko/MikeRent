@@ -1,4 +1,4 @@
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";

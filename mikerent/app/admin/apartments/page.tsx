@@ -76,20 +76,44 @@ export default async function ApartmentsPage() {
           </td>
           <td className="p-4 text-gray-600">{apt.city}</td>
           <td className="p-4">
-            {apt.ownerPhone ? (
-              <a
-                href={`tel:${apt.ownerPhone.replace(/\s/g, "")}`}
-                className="inline-flex items-center gap-1 text-sm text-gray-900 hover:text-blue-600"
-              >
-                <Phone size={14} className="shrink-0 text-gray-400" />
-                {apt.ownerPhone}
-              </a>
-            ) : (
-              <span className="text-sm text-gray-400">—</span>
-            )}
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-gray-900">
+                {(apt as typeof apt & { ownerName?: string | null }).ownerName || "Без імені"}
+              </span>
+              {apt.ownerPhone ? (
+                <a
+                  href={`tel:${apt.ownerPhone.replace(/\s/g, "")}`}
+                  className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-600"
+                >
+                  <Phone size={13} className="shrink-0 text-gray-400" />
+                  {apt.ownerPhone}
+                </a>
+              ) : (
+                <span className="text-xs text-gray-400">Телефон не вказано</span>
+              )}
+            </div>
           </td>
           <td className="p-4">
-            <span className="font-medium text-gray-900">${apt.pricePerNight}</span>
+            <div className="text-sm leading-5">
+              <div className="text-gray-600">
+                Власник:{" "}
+                <span className="font-medium text-gray-900">
+                  {(apt as any).ownerPrice ?? apt.pricePerNight}
+                </span>
+              </div>
+              <div className="text-gray-600">
+                Націнка:{" "}
+                <span className="font-medium text-gray-900">
+                  {(apt as any).markup ?? 0}
+                </span>
+              </div>
+              <div className="text-gray-900">
+                Разом:{" "}
+                <span className="font-semibold">
+                  {apt.pricePerNight}
+                </span>
+              </div>
+            </div>
           </td>
           <td className="p-4">
             <div className="flex flex-col gap-1">
@@ -274,7 +298,7 @@ export default async function ApartmentsPage() {
                   Місто
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">
-                  Тел. хазяїна
+                  Хазяїн
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">
                   Ціна/ніч
@@ -331,7 +355,7 @@ export default async function ApartmentsPage() {
                   Місто
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">
-                  Тел. хазяїна
+                  Хазяїн
                 </th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">
                   Ціна/ніч

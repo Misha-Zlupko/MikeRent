@@ -35,9 +35,12 @@ model Apartment {
 
   city          String
   address       String
+  ownerName     String? // лише для адмінки — ім'я власника/хазяїна
   ownerPhone    String? // лише для адмінки — телефон хазяїна квартири
   lastCalledAt  DateTime? // позначка останнього прозвону (скидається логічно через 12 год)
 
+  ownerPrice    Int           @default(0) // ціна власника за ніч (адмінка)
+  markup        Int           @default(0) // націнка за ніч (адмінка)
   pricePerNight Int
 
   guests        Int
@@ -130,4 +133,11 @@ model Testimonial {
   date    DateTime // можно хранить как дату, даже если сейчас у тебя строка
 
   createdAt DateTime @default(now())
+}
+
+model ActiveUser {
+  sessionId    String   @id
+  lastActivity DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

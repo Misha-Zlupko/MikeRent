@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { ArrowLeft, Link as LinkIcon, X, Calendar, Plus } from "lucide-react";
+import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 
 type BookedPeriod = {
   from: string;
@@ -19,6 +20,8 @@ type ApartmentData = {
   city: string;
   address: string;
   pricePerNight: number;
+  ownerPrice?: number;
+  markup?: number;
   guests: number;
   bedrooms: number;
   beds: number;
@@ -27,6 +30,7 @@ type ApartmentData = {
   images: string[];
   amenities: string[];
   mapUrl: string;
+  ownerName?: string | null;
   ownerPhone?: string | null;
   seasonFrom: string;
   seasonTo: string;
@@ -45,6 +49,10 @@ export default function EditApartmentForm({
     apartment.amenities || [],
   );
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [ownerPrice, setOwnerPrice] = useState<number>(
+    Number(apartment.ownerPrice ?? apartment.pricePerNight ?? 0),
+  );
+  const [markup, setMarkup] = useState<number>(Number(apartment.markup ?? 0));
 
   // Стан для заброньованих дат
   const [bookedPeriods, setBookedPeriods] = useState<BookedPeriod[]>(
@@ -59,14 +67,47 @@ export default function EditApartmentForm({
 
     const formData = new FormData(e.currentTarget);
 
+    const ownerName = formData.get("ownerName")?.toString().trim() || "";
+    const ownerPhone = formData.get("ownerPhone")?.toString().trim() || "";
+
+    if (!ownerName) {
+      alert("Ім'я власника не може бути порожнім");
+      setLoading(false);
+      return;
+    }
+    if (!ownerPhone) {
+      alert("Номер телефону власника не може бути порожнім");
+      setLoading(false);
+      return;
+    }
+    if (!isValidUkrainianPhone(ownerPhone)) {
+      alert(
+        "Некоректний номер телефону власника (наприклад: 0981234567 або +380981234567)",
+      );
+      setLoading(false);
+      return;
+    }
+    if (!Number.isFinite(ownerPrice) || ownerPrice < 0) {
+      alert("Ціна власника не може бути від’ємною");
+      setLoading(false);
+      return;
+    }
+    if (!Number.isFinite(markup) || markup < 0) {
+      alert("Націнка не може бути від’ємною");
+      setLoading(false);
+      return;
+    }
+
     const data = {
       title: formData.get("title"),
       type: formData.get("type")?.toString().toUpperCase(),
       category: formData.get("category")?.toString().toUpperCase(),
       city: formData.get("city"),
       address: formData.get("address"),
-      ownerPhone: formData.get("ownerPhone")?.toString().trim() || null,
-      pricePerNight: Number(formData.get("pricePerNight")),
+      ownerName,
+      ownerPhone: normalizePhone(ownerPhone),
+      ownerPrice,
+      markup,
       guests: Number(formData.get("guests")),
       bedrooms: Number(formData.get("bedrooms")),
       beds: Number(formData.get("beds")),
@@ -289,12 +330,27 @@ export default function EditApartmentForm({
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2">
-                  Телефон хазяїна (лише для адмінки)
+                  Ім'я власника *
+                </label>
+                <input
+                  name="ownerName"
+                  defaultValue={apartment.ownerName ?? ""}
+                  required
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder="Наприклад: Олександр"
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Телефон хазяїна *
                 </label>
                 <input
                   name="ownerPhone"
                   type="tel"
                   defaultValue={apartment.ownerPhone ?? ""}
+                  required
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   placeholder="+380971234567"
                   autoComplete="tel"
@@ -313,15 +369,41 @@ export default function EditApartmentForm({
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Ціна/ніч *
+                  Ціна власника/ніч *
                 </label>
                 <input
-                  name="pricePerNight"
                   type="number"
-                  defaultValue={apartment.pricePerNight}
                   required
                   min="0"
+                  value={ownerPrice}
+                  onChange={(e) => setOwnerPrice(Number(e.target.value))}
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Націнка/ніч *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={markup}
+                  onChange={(e) => setMarkup(Number(e.target.value))}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Підсумкова ціна/ніч
+                </label>
+                <input
+                  type="number"
+                  value={ownerPrice + markup}
+                  readOnly
+                  className="w-full p-2 border rounded bg-gray-50"
                 />
               </div>
 

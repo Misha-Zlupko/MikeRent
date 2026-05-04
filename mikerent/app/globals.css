@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-bg: 255 255 255;
+    /* основной цвет текста — тёмный (не синий #1E3A8A) */
+    --color-text: 17 24 39;
+    --color-primary: 37 99 235;
+    --color-muted: 148 163 184;
+    --color-border: 229 231 235;
+    --color-main: 0 161 241;
+  }
+
+  html,
+  body {
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-text));
+  }
+}
+
 body {
   height: 100%;
 }
@@ -132,12 +150,12 @@ body {
   height: 34px;
   padding: 10px;
 
-  background: white;
+  background: rgb(var(--color-bg));
   border-radius: 9999px;
 
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
 
-  color: #2563eb;
+  color: rgb(var(--color-primary));
   transition: all 0.25s ease;
 
   opacity: 0.85;

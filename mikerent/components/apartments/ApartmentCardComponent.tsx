@@ -152,7 +152,7 @@ export const ApartmentCard = ({ apartment }: Props) => {
         {/* Контент */}
         <div className="p-4 flex flex-col gap-2 flex-1">
           <div className="mb-auto">
-            <h3 className="font-bold mb-1 text-sm sm:text-base line-clamp-2">
+            <h3 className="font-bold mb-1 text-sm sm:text-base text-gray-900 line-clamp-2">
               {apartment.title}
             </h3>
 
@@ -167,7 +167,7 @@ export const ApartmentCard = ({ apartment }: Props) => {
           </div>
 
           <div>
-            <span className="text-base sm:text-lg font-semibold">
+            <span className="text-base sm:text-lg font-semibold text-gray-900">
               {apartment.pricePerNight} ₴
               <span className="text-xs sm:text-sm text-gray-500"> / ніч</span>
             </span>

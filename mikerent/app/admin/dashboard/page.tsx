@@ -14,7 +14,9 @@ export default async function AdminDashboard() {
   };
 
   // Отримуємо статистику з бази даних
-  const [apartmentsCount, bookingsCount, requestsCount, recentBookings] = await Promise.all([
+  const activeCutoff = new Date(Date.now() - 10 * 60 * 1000);
+  const [apartmentsCount, bookingsCount, requestsCount, activeUsersCount, recentBookings] =
+    await Promise.all([
     prisma.apartment.count(),
     prisma.booking.count(),
     prismaAny.bookingRequest.count({
@@ -24,6 +26,7 @@ export default async function AdminDashboard() {
         },
       },
     }),
+    prisma.activeUser.count({ where: { lastActivity: { gte: activeCutoff } } }),
     prisma.booking.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
@@ -56,7 +59,7 @@ export default async function AdminDashboard() {
       {/* Головний контент */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Статистика */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           {/* Картка: Квартири */}
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -123,6 +126,20 @@ export default async function AdminDashboard() {
             </div>
             <h3 className="text-gray-600 font-medium">Адміністратори</h3>
             <p className="text-sm text-gray-400 mt-2">Керування доступом</p>
+          </div>
+
+          {/* Картка: Активні користувачі */}
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-sky-100 rounded-full">
+                <Users className="w-6 h-6 text-sky-600" />
+              </div>
+              <span className="text-3xl font-bold text-sky-600">
+                {activeUsersCount}
+              </span>
+            </div>
+            <h3 className="text-gray-600 font-medium">Активні користувачі</h3>
+            <p className="text-sm text-gray-400 mt-2">Останні 10 хвилин</p>
           </div>
         </div>
 

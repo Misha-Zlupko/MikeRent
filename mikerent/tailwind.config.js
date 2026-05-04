@@ -9,12 +9,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: "#ffffff",
-        text: "#1e3a8a",
-        primary: "#2563eb",
-        muted: "#94a3b8",
-        border: "#e5e7eb",
-        main: "#00a1f1",
+        bg: "rgb(var(--color-bg) / <alpha-value>)",
+        text: "rgb(var(--color-text) / <alpha-value>)",
+        primary: "rgb(var(--color-primary) / <alpha-value>)",
+        muted: "rgb(var(--color-muted) / <alpha-value>)",
+        border: "rgb(var(--color-border) / <alpha-value>)",
+        main: "rgb(var(--color-main) / <alpha-value>)",
       },
     },
   },
