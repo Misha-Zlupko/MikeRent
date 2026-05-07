@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import type { Apartment, DateRangeISO } from "@/data/ApartmentsTypes";
 import { HomeClient } from "@/components/HomeClient";
+import { resolveGuestMonthlyPrices } from "@/lib/monthlyPricing";
 
 export const metadata: Metadata = {
   title: "Подобова оренда житла у місті Чорноморськ",
@@ -31,6 +32,7 @@ async function getApartments(): Promise<Apartment[]> {
       description: true,
       mapUrl: true,
       amenities: true,
+      availability: true,
       bookings: {
         select: {
           dateFrom: true,
@@ -40,32 +42,40 @@ async function getApartments(): Promise<Apartment[]> {
     },
   });
 
-  return dbApartments.map((a) => ({
-    id: a.id,
-    title: a.title,
-    type: a.type.toLowerCase() as Apartment["type"],
-    city: a.city,
-    address: a.address,
-    pricePerNight: a.pricePerNight,
-    guests: a.guests,
-    bedrooms: a.bedrooms,
-    beds: a.beds,
-    bathrooms: a.bathrooms,
-    images: a.images,
-    description: a.description,
-    mapUrl: a.mapUrl,
-    amenities: a.amenities,
-    availability: {
-      season: {
-        from: (a as any).seasonFrom?.toISOString().slice(0, 10) || "",
-        to: (a as any).seasonTo?.toISOString().slice(0, 10) || "",
-      } as DateRangeISO,
-      booked: a.bookings.map((b) => ({
-        from: b.dateFrom?.toISOString().slice(0, 10) || "",
-        to: b.dateTo?.toISOString().slice(0, 10) || "",
-      })),
-    },
-  }));
+  return dbApartments.map((a) => {
+    const availability = (a.availability ?? {}) as {
+      season?: { from?: string; to?: string };
+      booked?: DateRangeISO[];
+    };
+
+    return {
+      id: a.id,
+      title: a.title,
+      type: a.type.toLowerCase() as Apartment["type"],
+      city: a.city,
+      address: a.address,
+      pricePerNight: a.pricePerNight,
+      guests: a.guests,
+      bedrooms: a.bedrooms,
+      beds: a.beds,
+      bathrooms: a.bathrooms,
+      images: a.images,
+      description: a.description,
+      mapUrl: a.mapUrl,
+      amenities: a.amenities,
+      availability: {
+        season: {
+          from: availability.season?.from || "",
+          to: availability.season?.to || "",
+        } as DateRangeISO,
+        booked: a.bookings.map((b) => ({
+          from: b.dateFrom?.toISOString().slice(0, 10) || "",
+          to: b.dateTo?.toISOString().slice(0, 10) || "",
+        })),
+        monthlyPrices: resolveGuestMonthlyPrices(a.availability),
+      },
+    };
+  });
 }
 
 export default async function Home() {

@@ -81,34 +81,39 @@ export default function FavoritesPage() {
   if (favoriteApartments.length === 0) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-        <div className="container flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
-          {/* Кнопка назад */}
-          <div className="absolute left-4 top-4 sm:left-8 sm:top-8">
+        <div className="container py-8 sm:py-12">
+          {/* Той самий блок, що й коли список не порожній — без absolute */}
+          <div className="mb-6">
             <Link
               href="/"
               className="group inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
             >
-              <ChevronLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
+              <ChevronLeft
+                size={18}
+                className="transition-transform group-hover:-translate-x-0.5"
+              />
               На головну
             </Link>
           </div>
 
-          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner">
-            <Heart className="h-12 w-12 text-gray-400" strokeWidth={1.5} />
+          <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner">
+              <Heart className="h-12 w-12 text-gray-400" strokeWidth={1.5} />
+            </div>
+            <h1 className="mb-2 text-2xl font-bold text-gray-800">
+              Список порожній
+            </h1>
+            <p className="mb-6 text-gray-500">
+              Додайте квартири в обрані, щоб побачити їх тут
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-md transition hover:bg-blue-700"
+            >
+              <ArrowLeft size={18} />
+              Знайти житло
+            </Link>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-800">
-            Список порожній
-          </h1>
-          <p className="mb-6 text-gray-500">
-            Додайте квартири в обрані, щоб побачити їх тут
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-md transition hover:bg-blue-700"
-          >
-            <ArrowLeft size={18} />
-            Знайти житло
-          </Link>
         </div>
       </main>
     );

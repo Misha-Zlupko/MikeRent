@@ -12,6 +12,10 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react";
+import {
+  calculateTotalByMonth,
+  getMissingPriceMonths,
+} from "@/lib/monthlyPricing";
 
 type Props = {
   apartment: {
@@ -21,6 +25,7 @@ type Props = {
     guests: number;
     availability: {
       booked: { from: string; to: string }[];
+      monthlyPrices?: Record<string, number>;
     };
   };
 };
@@ -34,6 +39,18 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guestCount, setGuestCount] = useState(1);
+  const monthlyPrices = apartment.availability.monthlyPrices ?? {};
+
+  const formatMissingMonths = (months: string[]) =>
+    months
+      .map((monthKey) => {
+        const [year, month] = monthKey.split("-");
+        return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(
+          "uk-UA",
+          { month: "long", year: "numeric" },
+        );
+      })
+      .join(", ");
 
   const calculateTotal = () => {
     if (!checkIn || !checkOut) {
@@ -42,9 +59,13 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
     
     const startDate = new Date(checkIn);
     const endDate = new Date(checkOut);
-    const nights = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    return apartment.pricePerNight * (nights > 0 ? nights : 3);
+
+    const missingMonths = getMissingPriceMonths(startDate, endDate, monthlyPrices);
+    if (missingMonths.length > 0) {
+      return 0;
+    }
+
+    return calculateTotalByMonth(startDate, endDate, monthlyPrices);
   };
 
   const handleDatesSelected = (newCheckIn: string, newCheckOut: string) => {
@@ -77,11 +98,19 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
     }
     
     // Перевіряємо сезонність
-    const seasonStart = new Date("2026-06-01");
+    const seasonStart = new Date("2026-05-01");
     const seasonEnd = new Date("2026-09-30");
     
     if (startDate < seasonStart || endDate > seasonEnd) {
-      setDateError(`Бронювання доступне тільки з 1 червня по 30 вересня 2026 року`);
+      setDateError(`Бронювання доступне тільки з 1 травня по 30 вересня 2026 року`);
+      return false;
+    }
+
+    const missingMonths = getMissingPriceMonths(startDate, endDate, monthlyPrices);
+    if (missingMonths.length > 0) {
+      setDateError(
+        `Бронювання недоступне: немає ціни на ${formatMissingMonths(missingMonths)}.`,
+      );
       return false;
     }
     
@@ -236,7 +265,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
           
           {/* Мини-информация о сезоне */}
           <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-            <span>Червень - Вересень 2026</span>
+            <span>Травень - Вересень 2026</span>
             <span>
               {apartment.availability.booked.length} заброньованих періодів
             </span>
@@ -345,7 +374,12 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-gray-600">
-                  {apartment.pricePerNight} ₴ × {nights}{" "}
+              {(checkIn &&
+              checkOut &&
+              getMissingPriceMonths(new Date(checkIn), new Date(checkOut), monthlyPrices)
+                .length === 0
+                ? Math.round(totalPrice / Math.max(nights, 1))
+                : apartment.pricePerNight)} ₴ × {nights}{" "}
                   {nights === 1 ? "ніч" : nights < 5 ? "ночі" : "ночей"}
                 </span>
                 <p className="text-xs text-gray-500 mt-1">
@@ -357,7 +391,9 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
                 </p>
               </div>
               <span className="font-medium text-lg">
-                {apartment.pricePerNight * nights} ₴
+                {checkIn && checkOut && totalPrice === 0
+                  ? "Немає ціни"
+                  : `${totalPrice} ₴`}
               </span>
             </div>
             
@@ -374,7 +410,9 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
             <div className="pt-4 border-t border-gray-300 flex justify-between items-center">
               <span className="text-lg font-bold text-gray-900">Разом</span>
               <div className="text-right">
-                <span className="text-2xl font-bold text-blue-600">{totalPrice} ₴</span>
+                <span className="text-2xl font-bold text-blue-600">
+                  {totalPrice > 0 ? `${totalPrice} ₴` : "Немає ціни"}
+                </span>
                 <p className="text-xs text-gray-500 mt-1">
                   {checkIn && checkOut ? "За весь період" : "За 3 ночі (приблизно)"}
                 </p>
@@ -386,7 +424,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
         {/* Кнопка бронирования */}
         <button
           onClick={handleBookingClick}
-          disabled={!!dateError || !checkIn || !checkOut}
+          disabled={!!dateError || !checkIn || !checkOut || totalPrice <= 0}
           className="
             w-full h-14 rounded-xl
             bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600
@@ -428,6 +466,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
           isOpen={isDatePickerOpen}
           onClose={() => setIsDatePickerOpen(false)}
           bookedDates={apartment.availability.booked}
+          monthlyPrices={monthlyPrices}
           onDatesSelected={handleDatesSelected}
           currentCheckIn={checkIn}
           currentCheckOut={checkOut}

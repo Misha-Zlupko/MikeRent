@@ -15,6 +15,7 @@ interface SeasonDatePickerProps {
   isOpen: boolean;
   onClose: () => void;
   bookedDates: { from: string; to: string }[];
+  monthlyPrices: Record<string, number>;
   onDatesSelected: (checkIn: string, checkOut: string) => void;
   currentCheckIn?: string;
   currentCheckOut?: string;
@@ -24,11 +25,12 @@ export const SeasonDatePicker = ({
   isOpen,
   onClose,
   bookedDates,
+  monthlyPrices,
   onDatesSelected,
   currentCheckIn,
   currentCheckOut
 }: SeasonDatePickerProps) => {
-  const [currentMonth, setCurrentMonth] = useState<number>(5); // Июнь = 5 (0-январь)
+  const [currentMonth, setCurrentMonth] = useState<number>(4); // Травень = 4 (0-індекс)
   const [selectedDates, setSelectedDates] = useState<{checkIn: string | null; checkOut: string | null}>({
     checkIn: currentCheckIn || null,
     checkOut: currentCheckOut || null
@@ -52,7 +54,7 @@ export const SeasonDatePicker = ({
   }, [isOpen]);
   
   const SEASON_YEAR = 2026;
-  const SEASON_MONTHS = [5, 6, 7, 8]; // Июнь, Июль, Август, Сентябрь (0-indexed)
+  const SEASON_MONTHS = [4, 5, 6, 7, 8]; // Травень–вересень (0-indexed)
   
   const monthNames = [
     "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
@@ -66,6 +68,12 @@ export const SeasonDatePicker = ({
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
+  };
+
+  const getMonthKey = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
   };
   
   // Дата недоступна для нового ЗАЇЗДУ
@@ -113,14 +121,15 @@ export const SeasonDatePicker = ({
   
   // Проверка, доступна ли дата
   const isDateAvailable = (date: Date): boolean => {
-    // Только июнь-сентябрь 2026
+    // Тільки травень–вересень 2026
     const year = date.getFullYear();
     const month = date.getMonth();
     
     if (year !== SEASON_YEAR) return false;
     if (!SEASON_MONTHS.includes(month)) return false;
     
-    return !isDateBooked(date) && !isDateInPast(date);
+    const hasMonthPrice = Boolean(monthlyPrices[getMonthKey(date)]);
+    return hasMonthPrice && !isDateBooked(date) && !isDateInPast(date);
   };
 
   const hasOverlapWithBooked = (start: Date, end: Date): boolean => {
@@ -141,6 +150,7 @@ export const SeasonDatePicker = ({
     if (year !== SEASON_YEAR) return false;
     if (!SEASON_MONTHS.includes(month)) return false;
     if (isDateInPast(date)) return false;
+    if (!monthlyPrices[getMonthKey(date)]) return false;
 
     // Якщо ще не обрано заїзд — це вибір дати заїзду, тут дата має бути вільною.
     if (!selectedDates.checkIn || selectedDates.checkOut) {
@@ -254,13 +264,13 @@ export const SeasonDatePicker = ({
   
   // Навигация по месяцам
   const nextMonth = () => {
-    if (currentMonth < 8) { // Максимум сентябрь (8)
+    if (currentMonth < 8) {
       setCurrentMonth(prev => prev + 1);
     }
   };
   
   const prevMonth = () => {
-    if (currentMonth > 5) { // Минимум июнь (5)
+    if (currentMonth > 4) {
       setCurrentMonth(prev => prev - 1);
     }
   };
@@ -293,6 +303,8 @@ export const SeasonDatePicker = ({
   if (!isOpen) return null;
   
   const days = generateDays(currentMonth);
+  const currentMonthKey = `${SEASON_YEAR}-${String(currentMonth + 1).padStart(2, "0")}`;
+  const currentMonthPrice = monthlyPrices[currentMonthKey];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 overflow-hidden">
@@ -304,7 +316,7 @@ export const SeasonDatePicker = ({
             <CalendarIcon className="w-6 h-6 text-blue-600" />
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Календар бронювань</h2>
-              <p className="text-sm text-gray-500">Сезон 2026 • Червень - Вересень</p>
+              <p className="text-sm text-gray-500">Сезон 2026 • Травень - Вересень</p>
             </div>
           </div>
           <button
@@ -319,7 +331,7 @@ export const SeasonDatePicker = ({
         <div className="flex items-center justify-between px-6 pt-4">
           <button
             onClick={prevMonth}
-            disabled={currentMonth <= 5}
+            disabled={currentMonth <= 4}
             className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -337,6 +349,15 @@ export const SeasonDatePicker = ({
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
+
+        {!currentMonthPrice && (
+          <div className="px-6 pt-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              На {monthNames[currentMonth].toLowerCase()} {SEASON_YEAR} не вказана ціна.
+              Бронювання на цей місяць недоступне.
+            </div>
+          </div>
+        )}
 
         {/* Дни недели */}
         <div className="grid grid-cols-7 gap-1 px-6 pt-4">

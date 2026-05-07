@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Link as LinkIcon, X, Calendar, Plus } from "lucide-react";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
+import { seasonMonthKeys } from "@/lib/monthlyPricing";
 
 // Тип для періоду бронювання
 type BookedPeriod = {
@@ -18,16 +19,52 @@ export default function NewApartmentPage() {
   const [images, setImages] = useState<string[]>([]);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState("");
-  const [ownerPrice, setOwnerPrice] = useState<number>(0);
-  const [markup, setMarkup] = useState<number>(0);
-
   // Стан для заброньованих дат
   const [bookedPeriods, setBookedPeriods] = useState<BookedPeriod[]>([]);
 
-  // 👇 ДЕФОЛТНИЙ СЕЗОН: червень - вересень поточного року
   const currentYear = new Date().getFullYear();
-  const [seasonFrom, setSeasonFrom] = useState(`${currentYear}-06-01`);
+  const [seasonFrom, setSeasonFrom] = useState(`${currentYear}-05-01`);
   const [seasonTo, setSeasonTo] = useState(`${currentYear}-09-30`);
+
+  const priceYear =
+    Number(String(seasonFrom).slice(0, 4)) || currentYear;
+  const monthPriceKeys = useMemo(
+    () => seasonMonthKeys(priceYear),
+    [priceYear],
+  );
+
+  const [monthlyOwnerPrices, setMonthlyOwnerPrices] = useState<
+    Record<string, number>
+  >(() =>
+    Object.fromEntries(seasonMonthKeys(currentYear).map((k) => [k, 0])) as Record<
+      string,
+      number
+    >,
+  );
+  const [monthlyMarkups, setMonthlyMarkups] = useState<Record<string, number>>(
+    () =>
+      Object.fromEntries(seasonMonthKeys(currentYear).map((k) => [k, 0])) as Record<
+        string,
+        number
+      >,
+  );
+
+  useEffect(() => {
+    setMonthlyOwnerPrices((prev) => {
+      const next = { ...prev };
+      for (const k of monthPriceKeys) {
+        if (next[k] === undefined) next[k] = 0;
+      }
+      return next;
+    });
+    setMonthlyMarkups((prev) => {
+      const next = { ...prev };
+      for (const k of monthPriceKeys) {
+        if (next[k] === undefined) next[k] = 0;
+      }
+      return next;
+    });
+  }, [monthPriceKeys.join(",")]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -53,13 +90,16 @@ export default function NewApartmentPage() {
       setLoading(false);
       return;
     }
-    if (!Number.isFinite(ownerPrice) || ownerPrice < 0) {
-      alert("Ціна власника не може бути від’ємною");
-      setLoading(false);
-      return;
-    }
-    if (!Number.isFinite(markup) || markup < 0) {
-      alert("Націнка не може бути від’ємною");
+    const hasAnyMonthPrice = monthPriceKeys.some(
+      (k) =>
+        (Number(monthlyOwnerPrices[k] ?? 0) || 0) +
+          (Number(monthlyMarkups[k] ?? 0) || 0) >
+        0,
+    );
+    if (!hasAnyMonthPrice) {
+      alert(
+        "Вкажіть хоча б для одного місяця ціну власника та/або націнку (сума більше 0)",
+      );
       setLoading(false);
       return;
     }
@@ -72,8 +112,8 @@ export default function NewApartmentPage() {
       address: formData.get("address"),
       ownerName,
       ownerPhone: normalizePhone(ownerPhone),
-      ownerPrice,
-      markup,
+      monthlyOwnerPrices,
+      monthlyMarkups,
       guests: Number(formData.get("guests")),
       bedrooms: Number(formData.get("bedrooms")),
       beds: Number(formData.get("beds")),
@@ -197,6 +237,14 @@ export default function NewApartmentPage() {
     setBookedPeriods(bookedPeriods.filter((_, i) => i !== index));
   };
 
+  const monthNames: Record<string, string> = {
+    "05": "Травень",
+    "06": "Червень",
+    "07": "Липень",
+    "08": "Серпень",
+    "09": "Вересень",
+  };
+
   // Список доступних зручностей
   const amenitiesList = [
     { id: "wifi", label: "WiFi" },
@@ -232,6 +280,7 @@ export default function NewApartmentPage() {
     { id: "babyBed", label: "Дитяче ліжко" },
     { id: "towels", label: "Рушники" },
     { id: "shampoo", label: "Шампунь та гель" },
+    { id: "robotVacuum", label: "Робот-пилосос" },
   ];
 
   return (
@@ -360,47 +409,70 @@ export default function NewApartmentPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Ціна та місткість</h2>
 
+            <div className="mb-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Для кожного місяця вкажіть ціну власника за ніч і свою націнку. Для
+                гостя на сайті показується сума. Місяць без суми 0+0 — бронювати не
+                можна.
+              </p>
+              {monthPriceKeys.map((monthKey) => {
+                const month = monthKey.slice(-2);
+                const owner = monthlyOwnerPrices[monthKey] ?? 0;
+                const mark = monthlyMarkups[monthKey] ?? 0;
+                return (
+                  <div
+                    key={monthKey}
+                    className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:grid-cols-12 sm:items-end"
+                  >
+                    <div className="sm:col-span-3">
+                      <span className="text-sm font-medium text-gray-800">
+                        {monthNames[month]} {priceYear}
+                      </span>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="mb-1 block text-xs text-gray-600">
+                        Ціна власника / ніч
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={owner}
+                        onChange={(e) =>
+                          setMonthlyOwnerPrices((prev) => ({
+                            ...prev,
+                            [monthKey]: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="mb-1 block text-xs text-gray-600">
+                        Моя націнка / ніч
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={mark}
+                        onChange={(e) =>
+                          setMonthlyMarkups((prev) => ({
+                            ...prev,
+                            [monthKey]: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-3 pb-2 text-sm text-gray-700">
+                      Разом для гостя:{" "}
+                      <span className="font-semibold">{owner + mark} ₴</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Ціна власника/ніч *
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  value={ownerPrice}
-                  onChange={(e) => setOwnerPrice(Number(e.target.value))}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Націнка/ніч *
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  value={markup}
-                  onChange={(e) => setMarkup(Number(e.target.value))}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Підсумкова ціна/ніч
-                </label>
-                <input
-                  type="number"
-                  value={ownerPrice + markup}
-                  readOnly
-                  className="w-full p-2 border rounded bg-gray-50"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium mb-2">Гостей</label>
                 <input

@@ -8,6 +8,7 @@ import { ApartmentGallery } from "@/components/apartment/ApartmentGalleryCompone
 import { ApartmentContent } from "@/components/apartment/ApartmentContentComponent";
 import { ApartmentBookingCard } from "@/components/apartment/ApartmentBookingCardComponent";
 import { ApartmentMapComponent } from "@/components/apartment/ApartmentMapComponent";
+import { resolveGuestMonthlyPrices } from "@/lib/monthlyPricing";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -30,6 +31,7 @@ const getApartmentById = cache(async (id: string) => {
       beds: true,
       bathrooms: true,
       amenities: true,
+      availability: true,
       bookings: {
         select: {
           dateFrom: true,
@@ -131,6 +133,7 @@ export default async function ApartmentPage({ params }: PageProps) {
                     from: b.dateFrom.toISOString().slice(0, 10),
                     to: b.dateTo.toISOString().slice(0, 10),
                   })),
+                  monthlyPrices: resolveGuestMonthlyPrices(apartment.availability),
                 },
               }}
             />

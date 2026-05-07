@@ -57,24 +57,6 @@ export function HomeClient({ apartments }: Props) {
 
   return (
     <main>
-      {/* <section className="mb-6 bg-gradient-to-r from-sky-100 via-indigo-50 to-cyan-100 border border-white/60 shadow-sm">
-      <div className="container mx-auto">
-        <div className="rounded-3xl p-4 sm:p-6 md:p-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 text-center mb-4 sm:mb-5">
-            подобова аренда житла місто Чорномрськ
-          </h1>
-          <SearchForm
-            dateRange={dateRange as CalendarDateRange}
-            adults={adults}
-            childrenCount={childrenCount}
-            onSearch={handleSearch}
-          />
-          <div className="mt-4 sm:mt-5">
-            <ButtonFilterApartments value={typeFilter} onChange={setTypeFilter} />
-          </div>
-        </div>
-        </div>
-      </section> */}
 <section className="relative mb-12 overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50/30 to-white">
   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/30 via-transparent to-transparent" />
   <div className="container relative mx-auto px-4 py-12 sm:py-16 md:py-20">

@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
+import {
+  mergeMonthlyGuestPrices,
+  parseMonthlyNonNegative,
+} from "@/lib/monthlyPricing";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -74,21 +78,27 @@ export async function POST(req: Request) {
       );
     }
 
-    const ownerPrice = Number(data.ownerPrice);
-    const markup = Number(data.markup);
-    if (!Number.isFinite(ownerPrice) || ownerPrice < 0) {
+    const monthlyOwnerPrices = parseMonthlyNonNegative(data.monthlyOwnerPrices);
+    const monthlyMarkups = parseMonthlyNonNegative(data.monthlyMarkups);
+    const monthlyPrices = mergeMonthlyGuestPrices(
+      monthlyOwnerPrices,
+      monthlyMarkups,
+    );
+    if (Object.keys(monthlyPrices).length === 0) {
       return NextResponse.json(
-        { error: "Ціна власника не може бути від’ємною" },
+        {
+          error:
+            "Вкажіть хоча б для одного місяця ціну власника та/або націнку (сума має бути більше 0)",
+        },
         { status: 400 },
       );
     }
-    if (!Number.isFinite(markup) || markup < 0) {
-      return NextResponse.json(
-        { error: "Націнка не може бути від’ємною" },
-        { status: 400 },
-      );
-    }
-    const pricePerNight = ownerPrice + markup;
+    const ownerVals = Object.values(monthlyOwnerPrices);
+    const markupVals = Object.values(monthlyMarkups);
+    const guestVals = Object.values(monthlyPrices);
+    const ownerPrice = ownerVals.length ? Math.max(...ownerVals) : 0;
+    const markup = markupVals.length ? Math.max(...markupVals) : 0;
+    const pricePerNight = guestVals.length ? Math.max(...guestVals) : 0;
 
     const apartment = await prisma.apartment.create({
       data: {
@@ -110,10 +120,25 @@ export async function POST(req: Request) {
         images: data.images || [],
         amenities: data.amenities || [],
         mapUrl: data.mapUrl || "",
-        // ✅ ЗБЕРІГАЄМО ЯК Є - прямо JSON
-        availability: data.availability || {
-          season: { from: "", to: "" },
+        availability: {
+          season: {
+            from:
+              data.seasonFrom instanceof Date
+                ? data.seasonFrom.toISOString().slice(0, 10)
+                : typeof data.seasonFrom === "string"
+                  ? data.seasonFrom.slice(0, 10)
+                  : "",
+            to:
+              data.seasonTo instanceof Date
+                ? data.seasonTo.toISOString().slice(0, 10)
+                : typeof data.seasonTo === "string"
+                  ? data.seasonTo.slice(0, 10)
+                  : "",
+          },
           booked: [],
+          monthlyOwnerPrices,
+          monthlyMarkups,
+          monthlyPrices,
         },
       },
     });

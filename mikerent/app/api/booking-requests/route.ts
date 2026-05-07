@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  calculateTotalByMonth,
+  resolveGuestMonthlyPrices,
+  getMissingPriceMonths,
+} from "@/lib/monthlyPricing";
 
 function generateBookingNumber() {
   const now = new Date();
@@ -77,6 +82,37 @@ export async function POST(req: Request) {
       );
     }
 
+    const apartment = await prisma.apartment.findUnique({
+      where: { id: String(data.apartmentId) },
+      select: {
+        id: true,
+        title: true,
+        availability: true,
+      },
+    });
+
+    if (!apartment) {
+      return NextResponse.json({ error: "Квартиру не знайдено" }, { status: 404 });
+    }
+
+    const monthlyPrices = resolveGuestMonthlyPrices(apartment.availability);
+    const missingMonths = getMissingPriceMonths(checkIn, checkOut, monthlyPrices);
+    if (missingMonths.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Бронювання недоступне: на один або декілька місяців у вибраному періоді не вказана ціна.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const calculatedTotalPrice = calculateTotalByMonth(
+      checkIn,
+      checkOut,
+      monthlyPrices,
+    );
+
     const generatedNumber = generateBookingNumber();
     const bookingRequest = await prismaAny.bookingRequest.create({
       data: {
@@ -88,7 +124,7 @@ export async function POST(req: Request) {
         nights: Number(data.nights) || 1,
         checkIn,
         checkOut,
-        totalPrice: Number(data.totalPrice) || 0,
+        totalPrice: calculatedTotalPrice,
       },
       include: {
         apartment: {

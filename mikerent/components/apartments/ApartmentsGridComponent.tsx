@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Apartment, ApartmentType } from "@/data/ApartmentsTypes";
 import { ApartmentCard } from "./ApartmentCardComponent";
 import { DateRange } from "../SeasonCalendarComponent";
+import { getMissingPriceMonths } from "@/lib/monthlyPricing";
 
 type Props = {
   apartments: Apartment[];
@@ -54,6 +55,16 @@ export const ApartmentsGrid = ({
 
       const selectedFrom = new Date(dateRange.from);
       const selectedTo = new Date(dateRange.to);
+
+      const monthlyPrices = a.availability.monthlyPrices ?? {};
+      const missingMonths = getMissingPriceMonths(
+        selectedFrom,
+        selectedTo,
+        monthlyPrices,
+      );
+      if (missingMonths.length > 0) {
+        return false;
+      }
 
       // 5. Проверка занятых дат
       const hasBookingConflict = a.availability.booked.some((b) => {

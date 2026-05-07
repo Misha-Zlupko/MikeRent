@@ -33,7 +33,8 @@ import {
   Fan,
   Sofa,
   Video,
-  WashingMachine
+  WashingMachine,
+  Bot
 } from "lucide-react";
 
 type Props = {
@@ -77,6 +78,7 @@ const amenityIcons: Record<string, any> = {
   babyBed: Bed,
   towels: Shirt,
   shampoo: Droplets,
+  robotVacuum: Bot,
 };
 
 const amenityLabels: Record<string, string> = {
@@ -116,6 +118,7 @@ const amenityLabels: Record<string, string> = {
   babyBed: "Дитяче ліжко",
   towels: "Рушники",
   shampoo: "Шампунь та гель",
+  robotVacuum: "Робот-пилосос",
 };
 
 export const ApartmentAmenities = ({ amenities }: Props) => {

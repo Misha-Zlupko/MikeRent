@@ -8,6 +8,9 @@ export type DateRangeISO = {
 export type ApartmentAvailability = {
   season: DateRangeISO;
   booked: DateRangeISO[];
+  monthlyPrices?: Record<string, number>;
+  monthlyOwnerPrices?: Record<string, number>;
+  monthlyMarkups?: Record<string, number>;
 };
 
 export type Amenity =
@@ -20,7 +23,8 @@ export type Amenity =
   | "parking"
   | "balcony"
   | "seaView"
-  | "pool";
+  | "pool"
+  | "robotVacuum";
 
 export type Apartment = {
   id: string;
