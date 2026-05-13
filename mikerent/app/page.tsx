@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import type { Apartment, DateRangeISO } from "@/data/ApartmentsTypes";
 import { HomeClient } from "@/components/HomeClient";
 import { resolveGuestMonthlyPrices } from "@/lib/monthlyPricing";
+import { INACTIVE_BOOKING_STATUSES } from "@/lib/bookingStatus";
 
 export const metadata: Metadata = {
   title: "Подобова оренда житла у місті Чорноморськ",
@@ -33,7 +34,11 @@ async function getApartments(): Promise<Apartment[]> {
       mapUrl: true,
       amenities: true,
       availability: true,
+      floor: true,
+      totalFloors: true,
+      videoTourUrl: true,
       bookings: {
+        where: { status: { notIn: [...INACTIVE_BOOKING_STATUSES] } },
         select: {
           dateFrom: true,
           dateTo: true,
@@ -63,6 +68,9 @@ async function getApartments(): Promise<Apartment[]> {
       description: a.description,
       mapUrl: a.mapUrl,
       amenities: a.amenities,
+      floor: a.floor ?? null,
+      totalFloors: a.totalFloors ?? null,
+      videoTourUrl: a.videoTourUrl ?? null,
       availability: {
         season: {
           from: availability.season?.from || "",

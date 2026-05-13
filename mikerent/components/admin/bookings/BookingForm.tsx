@@ -26,7 +26,7 @@ export type InitialBookingValues = {
   totalAmount: number | null;
   ownerPayout: number | null;
   ourProfit: number | null;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
 };
 
 type BookingFormProps = {
@@ -62,7 +62,7 @@ export default function BookingForm({
   const [guestContact, setGuestContact] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
   const [status, setStatus] = useState<
-    "PENDING" | "CONFIRMED" | "CANCELLED"
+    "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED"
   >("CONFIRMED");
 
   // Стан для передоплати
@@ -190,13 +190,20 @@ export default function BookingForm({
         <select
           value={status}
           onChange={(e) =>
-            setStatus(e.target.value as "PENDING" | "CONFIRMED" | "CANCELLED")
+            setStatus(
+              e.target.value as
+                | "PENDING"
+                | "CONFIRMED"
+                | "CANCELLED"
+                | "REJECTED",
+            )
           }
           className="w-full max-w-md p-2 border rounded focus:ring-2 focus:ring-blue-500"
         >
           <option value="PENDING">Очікує</option>
           <option value="CONFIRMED">Підтверджено</option>
           <option value="CANCELLED">Скасовано</option>
+          <option value="REJECTED">Відхилено</option>
         </select>
       </div>
 

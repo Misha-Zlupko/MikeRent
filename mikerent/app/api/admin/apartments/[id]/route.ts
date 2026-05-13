@@ -9,6 +9,7 @@ import {
 } from "@/lib/monthlyPricing";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const ALLOWED_CITIES = new Set(["Черноморск", "Санжейка"]);
 
 async function verifyAdmin() {
   const cookieStore = await cookies();
@@ -98,6 +99,15 @@ export async function PUT(
   try {
     const { id } = await params;
     const data = await req.json();
+    const city = data.city?.toString().trim() || "";
+    const seaDistanceMin =
+      data.seaDistanceMin === null || data.seaDistanceMin === undefined
+        ? null
+        : Number(data.seaDistanceMin);
+    const seaDistanceMax =
+      data.seaDistanceMax === null || data.seaDistanceMax === undefined
+        ? null
+        : Number(data.seaDistanceMax);
 
     const ownerName =
       data.ownerName?.toString().trim() ? data.ownerName.toString().trim() : "";
@@ -119,6 +129,83 @@ export async function PUT(
     if (!isValidUkrainianPhone(ownerPhone)) {
       return NextResponse.json(
         { error: "Некоректний номер телефону власника" },
+        { status: 400 },
+      );
+    }
+    if (!ALLOWED_CITIES.has(city)) {
+      return NextResponse.json(
+        { error: "Доступні міста: Черноморск або Санжейка" },
+        { status: 400 },
+      );
+    }
+    if (
+      seaDistanceMin !== null &&
+      (!Number.isInteger(seaDistanceMin) || seaDistanceMin < 1)
+    ) {
+      return NextResponse.json(
+        { error: "Мінімальна відстань до моря має бути цілим числом від 1" },
+        { status: 400 },
+      );
+    }
+    if (
+      seaDistanceMax !== null &&
+      (!Number.isInteger(seaDistanceMax) || seaDistanceMax < 1)
+    ) {
+      return NextResponse.json(
+        { error: "Максимальна відстань до моря має бути цілим числом від 1" },
+        { status: 400 },
+      );
+    }
+    if (
+      seaDistanceMin !== null &&
+      seaDistanceMax !== null &&
+      seaDistanceMin > seaDistanceMax
+    ) {
+      return NextResponse.json(
+        { error: "Мінімальна відстань не може бути більшою за максимальну" },
+        { status: 400 },
+      );
+    }
+
+    const floor =
+      data.floor === null || data.floor === undefined || data.floor === ""
+        ? null
+        : Number(data.floor);
+    const totalFloors =
+      data.totalFloors === null ||
+      data.totalFloors === undefined ||
+      data.totalFloors === ""
+        ? null
+        : Number(data.totalFloors);
+    const videoTourUrlRaw =
+      typeof data.videoTourUrl === "string" ? data.videoTourUrl.trim() : "";
+    const videoTourUrl = videoTourUrlRaw.length > 0 ? videoTourUrlRaw : null;
+
+    if (floor !== null && (!Number.isInteger(floor) || floor < 1)) {
+      return NextResponse.json(
+        { error: "Поверх квартири має бути цілим числом від 1" },
+        { status: 400 },
+      );
+    }
+    if (
+      totalFloors !== null &&
+      (!Number.isInteger(totalFloors) || totalFloors < 1)
+    ) {
+      return NextResponse.json(
+        { error: "Кількість поверхів у будинку має бути цілим числом від 1" },
+        { status: 400 },
+      );
+    }
+    if (
+      floor !== null &&
+      totalFloors !== null &&
+      floor > totalFloors
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Поверх квартири не може бути більшим за загальну кількість поверхів у будинку",
+        },
         { status: 400 },
       );
     }
@@ -156,14 +243,14 @@ export async function PUT(
         ? (existing.availability as { booked?: unknown }).booked
         : [];
 
-    const apartment = await prisma.apartment.update({
-      where: { id },
-      data: {
+    const apartmentData = {
         title: data.title,
         type: data.type?.toUpperCase() || "APARTMENT",
         category: data.category?.toUpperCase() || "EXCLUSIVE",
-        city: data.city,
+        city,
         address: data.address || "",
+        seaDistanceMin,
+        seaDistanceMax,
         ownerName,
         ownerPhone: normalizePhone(ownerPhone),
         ownerPrice,
@@ -177,6 +264,9 @@ export async function PUT(
         images: data.images || [],
         amenities: data.amenities || [],
         mapUrl: data.mapUrl || "",
+        floor,
+        totalFloors,
+        videoTourUrl,
         // 👇 ЗАМІСТЬ seasonFrom/seasonTo ВИКОРИСТОВУЄМО availability
         availability: {
           season: {
@@ -198,7 +288,11 @@ export async function PUT(
           monthlyMarkups,
           monthlyPrices,
         },
-      },
+      };
+
+    const apartment = await prisma.apartment.update({
+      where: { id },
+      data: apartmentData as any,
     });
 
     return NextResponse.json(apartment);

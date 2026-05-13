@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -57,14 +58,12 @@ export async function POST(
       );
     }
 
-    const conflict = await prisma.booking.findFirst({
-      where: {
-        apartmentId: request.apartmentId,
-        status: { not: "CANCELLED" },
-        dateFrom: { lt: request.checkOut },
-        dateTo: { gt: request.checkIn },
-      },
-      select: { id: true },
+    const checkInUtc = withUtcHour(new Date(request.checkIn), 14);
+    const checkOutUtc = withUtcHour(new Date(request.checkOut), 12);
+    const conflict = await hasOverlappingActiveBooking({
+      apartmentId: request.apartmentId,
+      dateFrom: checkInUtc,
+      dateTo: checkOutUtc,
     });
 
     if (conflict) {
@@ -78,8 +77,8 @@ export async function POST(
       const booking = await tx.booking.create({
         data: {
           apartmentId: request.apartmentId,
-          dateFrom: withUtcHour(new Date(request.checkIn), 14),
-          dateTo: withUtcHour(new Date(request.checkOut), 12),
+          dateFrom: checkInUtc,
+          dateTo: checkOutUtc,
           guestPhone: request.phone,
           guestCount: request.guests,
           guestContact: request.comment,

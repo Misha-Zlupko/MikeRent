@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import type { BookingStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -35,9 +37,7 @@ export async function GET() {
       include: {
         apartment: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
     return NextResponse.json(bookings);
   } catch (error) {
@@ -59,11 +59,32 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
 
+    const dateFrom = withUtcHour(data.dateFrom, 14);
+    const dateTo = withUtcHour(data.dateTo, 12);
+    const status = (data.status as string) || "CONFIRMED";
+
+    if (status === "CONFIRMED" || status === "PENDING") {
+      const overlaps = await hasOverlappingActiveBooking({
+        apartmentId: String(data.apartmentId),
+        dateFrom,
+        dateTo,
+      });
+      if (overlaps) {
+        return NextResponse.json(
+          {
+            error:
+              "Є перетин з іншим активним бронюванням на ці дати — змініть дати або скасуйте інше бронювання.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const booking = await prisma.booking.create({
       data: {
         apartmentId: data.apartmentId,
-        dateFrom: withUtcHour(data.dateFrom, 14),
-        dateTo: withUtcHour(data.dateTo, 12),
+        dateFrom,
+        dateTo,
 
         // Інформація про гостя
         guestName: data.guestName,
@@ -78,7 +99,7 @@ export async function POST(req: Request) {
 
         // Додатково
         ownerPhone: data.ownerPhone,
-        status: data.status || "CONFIRMED",
+        status: status as BookingStatus,
       },
     });
 

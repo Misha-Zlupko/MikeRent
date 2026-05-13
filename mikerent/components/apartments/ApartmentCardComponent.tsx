@@ -90,6 +90,11 @@ export const ApartmentCard = ({ apartment }: Props) => {
       >
         {/* Галерея */}
         <div className="relative aspect-[4/3] w-full overflow-hidden">
+          {apartment.seaDistanceMin && apartment.seaDistanceMax && (
+            <div className="absolute left-2 top-2 z-20 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
+              {apartment.seaDistanceMin}-{apartment.seaDistanceMax} хв до моря
+            </div>
+          )}
           <Swiper
             modules={[Navigation]}
             slidesPerView={1}

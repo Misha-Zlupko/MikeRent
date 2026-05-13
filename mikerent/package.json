@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "create-admin": "tsx scripts/create-admin.ts"
+    "create-admin": "tsx scripts/create-admin.ts",
+    "migrate-db": "tsx scripts/migrate-neon-to-railway.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",

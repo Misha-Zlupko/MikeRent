@@ -6,6 +6,7 @@ import {
   extractMonthlyOwnerPrices,
   extractMonthlyPrices,
 } from "@/lib/monthlyPricing";
+import { isActiveBookingStatus } from "@/lib/bookingStatus";
 
 interface PageProps {
   params: Promise<{
@@ -39,10 +40,12 @@ export default async function EditApartmentPage({ params }: PageProps) {
     monthlyOwnerPrices: extractMonthlyOwnerPrices(apartment.availability),
     monthlyMarkups: extractMonthlyMarkups(apartment.availability),
     monthlyPrices: extractMonthlyPrices(apartment.availability),
-    bookings: apartment.bookings.map((b) => ({
-      from: b.dateFrom.toISOString().slice(0, 10),
-      to: b.dateTo.toISOString().slice(0, 10),
-    })),
+    bookings: apartment.bookings
+      .filter((b) => isActiveBookingStatus(b.status))
+      .map((b) => ({
+        from: b.dateFrom.toISOString().slice(0, 10),
+        to: b.dateTo.toISOString().slice(0, 10),
+      })),
   };
   return <EditApartmentForm apartment={apartmentWithStrings} />;
 }

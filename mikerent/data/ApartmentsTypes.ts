@@ -33,6 +33,8 @@ export type Apartment = {
 
   city: string;
   address: string;
+  seaDistanceMin?: number | null;
+  seaDistanceMax?: number | null;
 
   pricePerNight: number;
 
@@ -47,6 +49,13 @@ export type Apartment = {
 
   mapUrl: string;
   amenities: string[];
+
+  /** Поверх квартири (опційно) */
+  floor?: number | null;
+  /** Усього поверхів у будинку (опційно) */
+  totalFloors?: number | null;
+  /** Посилання на відеоогляд (опційно) */
+  videoTourUrl?: string | null;
 
   availability: ApartmentAvailability;
 };

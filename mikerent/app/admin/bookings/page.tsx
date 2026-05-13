@@ -6,12 +6,14 @@ import { prisma } from "@/lib/prisma";
 import BookingsListClient, {
   type BookingRowSerialized,
 } from "@/components/admin/bookings/BookingsListClient";
+import { isActiveBookingStatus } from "@/lib/bookingStatus";
 
 async function getBookings() {
   return prisma.booking.findMany({
     include: {
       apartment: true,
     },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
   });
 }
 
@@ -30,6 +32,8 @@ function serializeBookings(
     ownerPayout: b.ownerPayout,
     ourProfit: b.ourProfit,
     status: b.status,
+    createdAt: b.createdAt.toISOString(),
+    updatedAt: b.updatedAt.toISOString(),
     apartment: {
       id: b.apartment.id,
       title: b.apartment.title,
@@ -48,10 +52,10 @@ export default async function BookingsPage() {
     (b) =>
       b.dateFrom <= today &&
       b.dateTo >= today &&
-      b.status !== "CANCELLED",
+      isActiveBookingStatus(b.status),
   ).length;
   const futureCount = raw.filter(
-    (b) => b.dateFrom > today && b.status !== "CANCELLED",
+    (b) => b.dateFrom > today && isActiveBookingStatus(b.status),
   ).length;
   const pastCount = raw.filter((b) => b.dateTo < today).length;
 

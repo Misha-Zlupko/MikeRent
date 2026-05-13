@@ -8,7 +8,9 @@ import { ApartmentGallery } from "@/components/apartment/ApartmentGalleryCompone
 import { ApartmentContent } from "@/components/apartment/ApartmentContentComponent";
 import { ApartmentBookingCard } from "@/components/apartment/ApartmentBookingCardComponent";
 import { ApartmentMapComponent } from "@/components/apartment/ApartmentMapComponent";
+import { ApartmentVideoTour } from "@/components/apartment/ApartmentVideoTour";
 import { resolveGuestMonthlyPrices } from "@/lib/monthlyPricing";
+import { INACTIVE_BOOKING_STATUSES } from "@/lib/bookingStatus";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -22,6 +24,8 @@ const getApartmentById = cache(async (id: string) => {
       title: true,
       city: true,
       address: true,
+      seaDistanceMin: true,
+      seaDistanceMax: true,
       description: true,
       images: true,
       mapUrl: true,
@@ -30,21 +34,25 @@ const getApartmentById = cache(async (id: string) => {
       bedrooms: true,
       beds: true,
       bathrooms: true,
+      floor: true,
+      totalFloors: true,
+      videoTourUrl: true,
       amenities: true,
       availability: true,
       bookings: {
+        where: { status: { notIn: [...INACTIVE_BOOKING_STATUSES] } },
         select: {
           dateFrom: true,
           dateTo: true,
         },
       },
-    },
+    } as any,
   });
 });
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const apartment = await getApartmentById(id);
+  const apartment: any = await getApartmentById(id);
 
   if (!apartment) {
     return {
@@ -78,7 +86,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ApartmentPage({ params }: PageProps) {
   const { id } = await params;
-  const apartment = await getApartmentById(id);
+  const apartment: any = await getApartmentById(id);
 
   if (!apartment) {
     return null;
@@ -101,8 +109,13 @@ export default async function ApartmentPage({ params }: PageProps) {
               id: apartment.id,
               title: apartment.title,
               images: apartment.images ?? [],
+              seaDistanceMin: apartment.seaDistanceMin,
+              seaDistanceMax: apartment.seaDistanceMax,
             }}
           />
+          {apartment.videoTourUrl ? (
+            <ApartmentVideoTour videoTourUrl={apartment.videoTourUrl} />
+          ) : null}
           <ApartmentMapComponent
             apartment={{
               address: apartment.address,
@@ -115,6 +128,8 @@ export default async function ApartmentPage({ params }: PageProps) {
               bedrooms: apartment.bedrooms,
               beds: apartment.beds,
               bathrooms: apartment.bathrooms,
+              floor: apartment.floor,
+              totalFloors: apartment.totalFloors,
               description: apartment.description,
               amenities: apartment.amenities ?? [],
             }}
@@ -129,7 +144,7 @@ export default async function ApartmentPage({ params }: PageProps) {
                 pricePerNight: apartment.pricePerNight,
                 guests: apartment.guests,
                 availability: {
-                  booked: apartment.bookings.map((b) => ({
+                  booked: apartment.bookings.map((b: any) => ({
                     from: b.dateFrom.toISOString().slice(0, 10),
                     to: b.dateTo.toISOString().slice(0, 10),
                   })),

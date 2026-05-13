@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import type { BookingStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -54,6 +56,69 @@ export async function GET(
   }
 }
 
+const BOOKING_STATUSES = ["PENDING", "CONFIRMED", "CANCELLED", "REJECTED"] as const;
+
+// PATCH /api/admin/bookings/[id] — зміна лише статусу (скасування / відновлення)
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const status = body?.status as string | undefined;
+
+    if (!BOOKING_STATUSES.includes(status as (typeof BOOKING_STATUSES)[number])) {
+      return NextResponse.json(
+        { error: "Невідомий статус бронювання" },
+        { status: 400 },
+      );
+    }
+
+    const existing = await prisma.booking.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (status === "CONFIRMED" || status === "PENDING") {
+      const overlaps = await hasOverlappingActiveBooking({
+        apartmentId: existing.apartmentId,
+        dateFrom: existing.dateFrom,
+        dateTo: existing.dateTo,
+        excludeBookingId: id,
+      });
+      if (overlaps) {
+        return NextResponse.json(
+          {
+            error:
+              "Є перетин з іншим активним бронюванням на ці дати — змініть дати або скасуйте інше бронювання.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    const booking = await prisma.booking.update({
+      where: { id },
+      data: { status: status as BookingStatus },
+      include: { apartment: true },
+    });
+
+    return NextResponse.json(booking);
+  } catch (error) {
+    console.error("PATCH booking error:", error);
+    return NextResponse.json(
+      { error: "Помилка оновлення статусу" },
+      { status: 500 },
+    );
+  }
+}
+
 // PUT /api/admin/bookings/[id]
 export async function PUT(
   req: Request,
@@ -68,12 +133,55 @@ export async function PUT(
     const { id } = await params;
     const data = await req.json();
 
+    const existing = await prisma.booking.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const apartmentId =
+      typeof data.apartmentId === "string" && data.apartmentId
+        ? data.apartmentId
+        : existing.apartmentId;
+    const dateFrom =
+      data.dateFrom != null && String(data.dateFrom).length > 0
+        ? withUtcHour(data.dateFrom, 14)
+        : existing.dateFrom;
+    const dateTo =
+      data.dateTo != null && String(data.dateTo).length > 0
+        ? withUtcHour(data.dateTo, 12)
+        : existing.dateTo;
+
+    const rawStatus = data.status;
+    const status = BOOKING_STATUSES.includes(
+      rawStatus as (typeof BOOKING_STATUSES)[number],
+    )
+      ? rawStatus
+      : "CONFIRMED";
+
+    if (status === "CONFIRMED" || status === "PENDING") {
+      const overlaps = await hasOverlappingActiveBooking({
+        apartmentId,
+        dateFrom,
+        dateTo,
+        excludeBookingId: id,
+      });
+      if (overlaps) {
+        return NextResponse.json(
+          {
+            error:
+              "Є перетин з іншим активним бронюванням на ці дати — змініть дати або скасуйте інше бронювання.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const booking = await prisma.booking.update({
       where: { id },
       data: {
-        apartmentId: data.apartmentId,
-        dateFrom: withUtcHour(data.dateFrom, 14),
-        dateTo: withUtcHour(data.dateTo, 12),
+        apartmentId,
+        dateFrom,
+        dateTo,
         guestName: data.guestName || null,
         guestPhone: data.guestPhone || null,
         guestCount: data.guestCount ? Number(data.guestCount) : null,
@@ -82,7 +190,7 @@ export async function PUT(
         ownerPayout: data.ownerPayout != null ? Number(data.ownerPayout) : null,
         ourProfit: data.ourProfit != null ? Number(data.ourProfit) : null,
         ownerPhone: data.ownerPhone || null,
-        status: data.status || "CONFIRMED",
+        status: status as BookingStatus,
       },
       include: { apartment: true },
     });

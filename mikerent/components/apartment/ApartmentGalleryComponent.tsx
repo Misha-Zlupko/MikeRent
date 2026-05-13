@@ -17,6 +17,8 @@ type Props = {
     id: string;
     title: string;
     images: string[];
+    seaDistanceMin?: number | null;
+    seaDistanceMax?: number | null;
   };
 };
 
@@ -93,6 +95,11 @@ export const ApartmentGallery = ({ apartment }: Props) => {
   return (
     <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
       <div className="relative overflow-hidden rounded-xl">
+        {apartment.seaDistanceMin && apartment.seaDistanceMax && (
+          <div className="absolute left-3 top-3 z-20 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
+            {apartment.seaDistanceMin}-{apartment.seaDistanceMax} хв до моря
+          </div>
+        )}
         <Swiper
           loop
           navigation={{

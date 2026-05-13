@@ -21,7 +21,7 @@ type BookingApi = {
   totalAmount: number | null;
   ownerPayout: number | null;
   ourProfit: number | null;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
   apartment: {
     id: string;
     title: string;

@@ -12,14 +12,19 @@ import {
   CalendarDays,
   Archive,
   LayoutGrid,
+  History,
 } from "lucide-react";
 import { bookingStoredToUah } from "@/lib/bookingAmounts";
-import DeleteBookingButton from "@/components/admin/bookings/DeleteBookingButton";
+import CancelBookingButton from "@/components/admin/bookings/CancelBookingButton";
+import RestoreBookingButton from "@/components/admin/bookings/RestoreBookingButton";
+import { isActiveBookingStatus } from "@/lib/bookingStatus";
 
 export type BookingRowSerialized = {
   id: string;
   dateFrom: string;
   dateTo: string;
+  createdAt: string;
+  updatedAt: string;
   guestName: string | null;
   guestPhone: string | null;
   guestCount: number | null;
@@ -27,7 +32,7 @@ export type BookingRowSerialized = {
   totalAmount: number | null;
   ownerPayout: number | null;
   ourProfit: number | null;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
   apartment: {
     id: string;
     title: string;
@@ -36,7 +41,9 @@ export type BookingRowSerialized = {
   };
 };
 
-type TabId = "all" | "active" | "upcoming" | "pending" | "archive";
+type TabId = "all" | "active" | "upcoming" | "pending" | "archive" | "history";
+
+type HistoryFilterId = "all" | "confirmed" | "pending" | "cancelled" | "rejected";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -62,7 +69,7 @@ function classify(
   b: BookingRowSerialized,
   now: Date,
 ): "active" | "pending" | "upcoming" | "past" | "cancelled" {
-  if (b.status === "CANCELLED") return "cancelled";
+  if (b.status === "CANCELLED" || b.status === "REJECTED") return "cancelled";
   if (overlapsToday(b.dateFrom, b.dateTo, now)) return "active";
   if (b.status === "PENDING") return "pending";
   const from = startOfDay(new Date(b.dateFrom));
@@ -78,11 +85,28 @@ function sortByCheckOutDesc(a: BookingRowSerialized, b: BookingRowSerialized) {
   return new Date(b.dateTo).getTime() - new Date(a.dateTo).getTime();
 }
 
+function sortByUpdatedDesc(a: BookingRowSerialized, b: BookingRowSerialized) {
+  return (
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime() ||
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("uk-UA", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+  });
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -104,9 +128,29 @@ const tabs: {
   { id: "upcoming", label: "Заплановані", short: "План", icon: CalendarDays },
   { id: "pending", label: "Очікують", short: "Очікують", icon: Clock },
   { id: "archive", label: "Архів", short: "Архів", icon: Archive },
+  {
+    id: "history",
+    label: "Історія за статусами",
+    short: "Історія",
+    icon: History,
+  },
 ];
 
-function BookingTableRow({ booking }: { booking: BookingRowSerialized }) {
+const historyFilters: { id: HistoryFilterId; label: string }[] = [
+  { id: "all", label: "Усі записи" },
+  { id: "confirmed", label: "Підтверджені" },
+  { id: "pending", label: "Очікують" },
+  { id: "cancelled", label: "Скасовані" },
+  { id: "rejected", label: "Відхилені" },
+];
+
+function BookingTableRow({
+  booking,
+  variant = "default",
+}: {
+  booking: BookingRowSerialized;
+  variant?: "default" | "history";
+}) {
   const nights = calculateNights(booking.dateFrom, booking.dateTo);
   const now = new Date();
   const isActive = overlapsToday(booking.dateFrom, booking.dateTo, now);
@@ -121,6 +165,9 @@ function BookingTableRow({ booking }: { booking: BookingRowSerialized }) {
   if (booking.status === "CANCELLED") {
     statusLabel = "Скасовано";
     statusClass = "bg-red-100 text-red-800";
+  } else if (booking.status === "REJECTED") {
+    statusLabel = "Відхилено";
+    statusClass = "bg-orange-100 text-orange-900";
   } else if (booking.status === "PENDING") {
     statusLabel = "Очікує";
     statusClass = "bg-yellow-100 text-yellow-800";
@@ -181,6 +228,12 @@ function BookingTableRow({ booking }: { booking: BookingRowSerialized }) {
           {formatDate(booking.dateFrom)} — {formatDate(booking.dateTo)}
         </div>
         <div className="text-sm text-gray-500">{nights} ночей</div>
+        {variant === "history" && (
+          <div className="mt-2 space-y-0.5 text-xs text-gray-500">
+            <div>Створено: {formatDateTime(booking.createdAt)}</div>
+            <div>Оновлено: {formatDateTime(booking.updatedAt)}</div>
+          </div>
+        )}
       </td>
       <td className="p-4 align-top">
         <div className="font-medium text-gray-900">
@@ -212,7 +265,11 @@ function BookingTableRow({ booking }: { booking: BookingRowSerialized }) {
           >
             <Pencil size={18} />
           </Link>
-          <DeleteBookingButton id={booking.id} />
+          {isActiveBookingStatus(booking.status) ? (
+            <CancelBookingButton id={booking.id} />
+          ) : (
+            <RestoreBookingButton id={booking.id} />
+          )}
         </div>
       </td>
     </tr>
@@ -294,6 +351,7 @@ export default function BookingsListClient({
   bookings: BookingRowSerialized[];
 }) {
   const [tab, setTab] = useState<TabId>("all");
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilterId>("all");
   const now = useMemo(() => new Date(), []);
 
   const grouped = useMemo(() => {
@@ -347,6 +405,21 @@ export default function BookingsListClient({
     return [...list].sort(sortByCheckInAsc);
   }, [tab, grouped]);
 
+  const historyRows = useMemo(() => {
+    const sorted = [...bookings].sort(sortByUpdatedDesc);
+    if (historyFilter === "all") return sorted;
+    if (historyFilter === "confirmed") {
+      return sorted.filter((b) => b.status === "CONFIRMED");
+    }
+    if (historyFilter === "pending") {
+      return sorted.filter((b) => b.status === "PENDING");
+    }
+    if (historyFilter === "cancelled") {
+      return sorted.filter((b) => b.status === "CANCELLED");
+    }
+    return sorted.filter((b) => b.status === "REJECTED");
+  }, [bookings, historyFilter]);
+
   if (bookings.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
@@ -367,7 +440,8 @@ export default function BookingsListClient({
       <div className="mb-6 flex flex-col gap-3">
         <p className="text-sm text-gray-500">
           У списках порядок: найближча дата заїзду зверху (для архіву — нещодавно
-          завершені першими).
+          завершені першими). Вкладка «Історія» — усі записи за датою останньої
+          зміни; скасоване бронювання можна відновити кнопкою зі стрілкою.
         </p>
         <div
           className="inline-flex flex-wrap p-1 bg-gray-100 rounded-xl gap-1"
@@ -432,7 +506,85 @@ export default function BookingsListClient({
         </div>
       )}
 
-      {tab !== "all" && (
+      {tab === "history" && (
+        <div className="space-y-4">
+          <div
+            className="flex flex-wrap gap-2"
+            role="group"
+            aria-label="Фільтр історії за статусом"
+          >
+            {historyFilters.map((f) => {
+              const on = historyFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setHistoryFilter(f.id)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    on
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+            {historyRows.length === 0 ? (
+              <p className="p-8 text-center text-gray-500">
+                У цьому фільтрі поки нічого немає
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px]">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Квартира
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Гість
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Дати та запис
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Сума (грн)
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Хазяїну
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Прибуток
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Статус
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Дії
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyRows.map((b) => (
+                      <BookingTableRow
+                        key={b.id}
+                        booking={b}
+                        variant="history"
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab !== "all" && tab !== "history" && (
         <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
           {filteredSingle.length === 0 ? (
             <p className="p-8 text-center text-gray-500">

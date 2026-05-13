@@ -9,6 +9,8 @@ type Props = {
     bedrooms: number;
     beds: number;
     bathrooms: number;
+    floor?: number | null;
+    totalFloors?: number | null;
     description: string;
     amenities: string[];
   };
@@ -23,6 +25,8 @@ export const ApartmentContent = ({ apartment }: Props) => {
           bedrooms={apartment.bedrooms}
           beds={apartment.beds}
           bathrooms={apartment.bathrooms}
+          floor={apartment.floor}
+          totalFloors={apartment.totalFloors}
         />
       </section>
 

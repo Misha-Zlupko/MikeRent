@@ -58,9 +58,9 @@ export default function FavoritesPage() {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
   };
 
-  const favoriteApartments = apartments.filter((apartment) =>
-    favorites.includes(apartment.id),
-  );
+  const favoriteApartments = apartments
+    .filter((apartment) => favorites.includes(apartment.id))
+    .sort((a, b) => a.pricePerNight - b.pricePerNight);
 
   const apartmentsCount = favoriteApartments.length;
   const apartmentsText = getApartmentsText(apartmentsCount);

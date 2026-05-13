@@ -31,6 +31,11 @@ type ApartmentData = {
   mapUrl: string;
   ownerName?: string | null;
   ownerPhone?: string | null;
+  seaDistanceMin?: number | null;
+  seaDistanceMax?: number | null;
+  floor?: number | null;
+  totalFloors?: number | null;
+  videoTourUrl?: string | null;
   seasonFrom: string;
   seasonTo: string;
   bookings: BookedPeriod[];
@@ -100,6 +105,12 @@ export default function EditApartmentForm({
   );
   const [seasonFrom, setSeasonFrom] = useState(apartment.seasonFrom);
   const [seasonTo, setSeasonTo] = useState(apartment.seasonTo);
+  const [seaDistanceMin, setSeaDistanceMin] = useState<number>(
+    apartment.seaDistanceMin ?? 5,
+  );
+  const [seaDistanceMax, setSeaDistanceMax] = useState<number>(
+    apartment.seaDistanceMax ?? 7,
+  );
 
   const priceYear =
     Number(String(seasonFrom).slice(0, 4)) || new Date().getFullYear();
@@ -164,6 +175,44 @@ export default function EditApartmentForm({
       setLoading(false);
       return;
     }
+    if (seaDistanceMin > seaDistanceMax) {
+      alert("Відстань до моря: мінімум не може бути більшим за максимум");
+      setLoading(false);
+      return;
+    }
+
+    const floorRaw = formData.get("floor")?.toString().trim();
+    const totalFloorsRaw = formData.get("totalFloors")?.toString().trim();
+    const videoTourUrlRaw =
+      formData.get("videoTourUrl")?.toString().trim() || "";
+    const floor =
+      floorRaw && floorRaw.length > 0 ? Number(floorRaw) : null;
+    const totalFloors =
+      totalFloorsRaw && totalFloorsRaw.length > 0
+        ? Number(totalFloorsRaw)
+        : null;
+    if (floor !== null && (!Number.isInteger(floor) || floor < 1)) {
+      alert("Поверх квартири має бути цілим числом від 1");
+      setLoading(false);
+      return;
+    }
+    if (
+      totalFloors !== null &&
+      (!Number.isInteger(totalFloors) || totalFloors < 1)
+    ) {
+      alert("Кількість поверхів у будинку має бути цілим числом від 1");
+      setLoading(false);
+      return;
+    }
+    if (
+      floor !== null &&
+      totalFloors !== null &&
+      floor > totalFloors
+    ) {
+      alert("Поверх квартири не може бути більшим за кількість поверхів у будинку");
+      setLoading(false);
+      return;
+    }
 
     const data = {
       title: formData.get("title"),
@@ -171,6 +220,11 @@ export default function EditApartmentForm({
       category: formData.get("category")?.toString().toUpperCase(),
       city: formData.get("city"),
       address: formData.get("address"),
+      seaDistanceMin,
+      seaDistanceMax,
+      floor,
+      totalFloors,
+      videoTourUrl: videoTourUrlRaw.length > 0 ? videoTourUrlRaw : null,
       ownerName,
       ownerPhone: normalizePhone(ownerPhone),
       monthlyOwnerPrices,
@@ -309,6 +363,40 @@ export default function EditApartmentForm({
     { id: "shampoo", label: "Шампунь та гель" },
     { id: "robotVacuum", label: "Робот-пилосос" },
   ];
+  const amenityPresets: { label: string; ids: string[] }[] = [
+    {
+      label: "База",
+      ids: ["wifi", "airConditioner", "kitchen", "dishes", "tv", "refrigerator"],
+    },
+    {
+      label: "Сімейна",
+      ids: [
+        "wifi",
+        "airConditioner",
+        "kitchen",
+        "washingMachine",
+        "babyBed",
+        "towels",
+      ],
+    },
+    {
+      label: "Комфорт+",
+      ids: [
+        "wifi",
+        "airConditioner",
+        "kitchen",
+        "washingMachine",
+        "smartTV",
+        "coffeeMachine",
+        "robotVacuum",
+      ],
+    },
+  ];
+  const seaDistancePresets = [
+    { label: "5-7 хв", min: 5, max: 7 },
+    { label: "7-10 хв", min: 7, max: 10 },
+    { label: "10-15 хв", min: 10, max: 15 },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -385,13 +473,15 @@ export default function EditApartmentForm({
                 <label className="block text-sm font-medium mb-2">
                   Місто *
                 </label>
-                <input
+                <select
                   name="city"
-                  defaultValue={apartment.city}
+                  defaultValue={apartment.city || "Черноморск"}
                   required
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder="Львів"
-                />
+                >
+                  <option value="Черноморск">Черноморск</option>
+                  <option value="Санжейка">Санжейка</option>
+                </select>
               </div>
 
               <div>
@@ -402,6 +492,48 @@ export default function EditApartmentForm({
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   placeholder="вул. Коперника, 10"
                 />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Відстань до моря (хвилини)
+                </label>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {seaDistancePresets.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        setSeaDistanceMin(preset.min);
+                        setSeaDistanceMax(preset.max);
+                      }}
+                      className="rounded-full border border-blue-200 px-3 py-1 text-sm text-blue-700 hover:bg-blue-50"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="number"
+                    min={1}
+                    value={seaDistanceMin}
+                    onChange={(e) => setSeaDistanceMin(Number(e.target.value) || 1)}
+                    className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Від"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={seaDistanceMax}
+                    onChange={(e) => setSeaDistanceMax(Number(e.target.value) || 1)}
+                    className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="До"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  На фото буде плашка: {seaDistanceMin}-{seaDistanceMax} хв до моря
+                </p>
               </div>
 
               <div className="md:col-span-2">
@@ -554,6 +686,47 @@ export default function EditApartmentForm({
                 />
               </div>
             </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Поверх квартири (опційно)
+                </label>
+                <input
+                  name="floor"
+                  type="number"
+                  min={1}
+                  defaultValue={apartment.floor ?? ""}
+                  placeholder="Напр. 3"
+                  className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Поверхів у будинку (опційно)
+                </label>
+                <input
+                  name="totalFloors"
+                  type="number"
+                  min={1}
+                  defaultValue={apartment.totalFloors ?? ""}
+                  placeholder="Напр. 9"
+                  className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Відеоогляд — посилання (опційно)
+                </label>
+                <input
+                  name="videoTourUrl"
+                  type="url"
+                  defaultValue={apartment.videoTourUrl ?? ""}
+                  placeholder="https://www.youtube.com/watch?v=…"
+                  className="w-full rounded border p-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Фото */}
@@ -694,6 +867,25 @@ export default function EditApartmentForm({
           {/* Зручності */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Зручності</h2>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {amenityPresets.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setAmenities(preset.ids)}
+                  className="rounded-full border border-blue-200 px-3 py-1 text-sm text-blue-700 hover:bg-blue-50"
+                >
+                  Генератор: {preset.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setAmenities([])}
+                className="rounded-full border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Очистити
+              </button>
+            </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {amenitiesList.map((amenity) => (

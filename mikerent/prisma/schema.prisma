@@ -35,6 +35,8 @@ model Apartment {
 
   city          String
   address       String
+  seaDistanceMin Int?
+  seaDistanceMax Int?
   ownerName     String? // лише для адмінки — ім'я власника/хазяїна
   ownerPhone    String? // лише для адмінки — телефон хазяїна квартири
   lastCalledAt  DateTime? // позначка останнього прозвону (скидається логічно через 12 год)
@@ -53,6 +55,12 @@ model Apartment {
   mapUrl        String
   amenities     String[]
 
+  /// Поверх квартири (опційно), наприклад 3
+  floor           Int?
+  /// Скільки поверхів у будинку (опційно), наприклад 9
+  totalFloors     Int?
+  /// Посилання на відеоогляд (YouTube тощо), опційно
+  videoTourUrl    String?
 
   availability    Json?      
   bookings        Booking[]
@@ -85,6 +93,7 @@ model Booking {
 
   // Службова інформація
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   status      BookingStatus @default(PENDING)
 
   @@map("bookings")
@@ -94,6 +103,7 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
+  REJECTED
 }
 
 enum BookingRequestStatus {

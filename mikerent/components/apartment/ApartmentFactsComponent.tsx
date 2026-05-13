@@ -3,6 +3,8 @@ type Props = {
   bedrooms: number;
   beds: number;
   bathrooms: number;
+  floor?: number | null;
+  totalFloors?: number | null;
 };
 
 function pluralize(count: number, one: string, few: string, many: string) {
@@ -15,12 +17,29 @@ function pluralize(count: number, one: string, few: string, many: string) {
   return many;
 }
 
+function floorLabel(floor: number | null | undefined, totalFloors: number | null | undefined) {
+  if (floor != null && totalFloors != null) {
+    return `${floor}-й поверх з ${totalFloors}`;
+  }
+  if (floor != null) {
+    return `${floor}-й поверх`;
+  }
+  if (totalFloors != null) {
+    return `Будинок: ${totalFloors} ${pluralize(totalFloors, "поверх", "поверхи", "поверхів")}`;
+  }
+  return null;
+}
+
 export const ApartmentFacts = ({
   guests,
   bedrooms,
   beds,
   bathrooms,
+  floor,
+  totalFloors,
 }: Props) => {
+  const floorText = floorLabel(floor, totalFloors);
+
   return (
     <div className="flex flex-wrap gap-2 text-sm text-gray-700">
       <span className="px-3 py-1 rounded-full bg-gray-100">
@@ -38,6 +57,10 @@ export const ApartmentFacts = ({
       <span className="px-3 py-1 rounded-full bg-gray-100">
         {bathrooms} {pluralize(bathrooms, "ванна", "ванни", "ванн")}
       </span>
+
+      {floorText ? (
+        <span className="px-3 py-1 rounded-full bg-gray-100">{floorText}</span>
+      ) : null}
     </div>
   );
 };

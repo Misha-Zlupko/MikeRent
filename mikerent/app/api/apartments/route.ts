@@ -10,6 +10,8 @@ export async function GET() {
       category: true,
       city: true,
       address: true,
+      seaDistanceMin: true,
+      seaDistanceMax: true,
       pricePerNight: true,
       guests: true,
       bedrooms: true,
@@ -23,6 +25,9 @@ export async function GET() {
       createdAt: true,
       updatedAt: true,
       lastCalledAt: true,
+      floor: true,
+      totalFloors: true,
+      videoTourUrl: true,
     },
   });
   return NextResponse.json(apartments, {
