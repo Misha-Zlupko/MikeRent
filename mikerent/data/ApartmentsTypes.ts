@@ -44,8 +44,6 @@ export type Apartment = {
   bathrooms: number;
 
   images: string[];
-  /** Скільки фото в об'єкті (для бейджа на головній, якщо в images лише обкладинка) */
-  photoCount?: number;
 
   description: string;
 

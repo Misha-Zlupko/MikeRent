@@ -46,9 +46,6 @@ async function getApartments(): Promise<Apartment[]> {
     const availability = (a.availability ?? {}) as {
       season?: { from?: string; to?: string };
     };
-    const cover = a.images[0];
-    const photoCount = a.images.length;
-
     return {
       id: a.id,
       title: a.title,
@@ -60,8 +57,7 @@ async function getApartments(): Promise<Apartment[]> {
       bedrooms: 0,
       beds: a.beds,
       bathrooms: 0,
-      images: cover ? [cover] : [],
-      photoCount,
+      images: a.images,
       description: "",
       mapUrl: "",
       amenities: [],
