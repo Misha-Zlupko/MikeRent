@@ -39,7 +39,10 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center">Вхід в адмінку</h1>
+        <h1 className="text-2xl font-bold mb-2 text-center">Вхід в адмінку</h1>
+        <p className="mb-6 text-center text-sm text-gray-600">
+          Одна сторінка для власника та співробітника — різні email і пароль.
+        </p>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -78,6 +81,15 @@ export default function AdminLoginPage() {
             {loading ? "Вхід..." : "Увійти"}
           </button>
         </form>
+
+        <div className="mt-6 rounded-lg border border-violet-100 bg-violet-50 p-4 text-sm text-violet-900">
+          <p className="font-medium mb-1">Співробітник — як увійти?</p>
+          <ol className="list-decimal list-inside space-y-1 text-violet-800">
+            <li>Відкрийте цю ж сторінку (наприклад /admin/login)</li>
+            <li>Email і пароль, які створив власник на дашборді</li>
+            <li>Після входу — дашборд з оплатою, броні, квартирами (без видалення)</li>
+          </ol>
+        </div>
       </div>
     </div>
   );

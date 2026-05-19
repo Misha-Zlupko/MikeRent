@@ -4,9 +4,14 @@ import { useState, useEffect } from "react";
 import ApartmentSelector from "./ApartmentSelector";
 import DateSelector from "./DateSelector";
 import GuestInfo from "./GuestInfo";
+import GuestHistoryPanel from "./GuestHistoryPanel";
+import PaymentStatusSelect from "./PaymentStatusSelect";
+import MessageTemplatesCard from "@/components/admin/MessageTemplatesCard";
 import FinancialSection from "./FinancialSection";
 import FormActions from "./FormActions";
 import { ClipboardList } from "lucide-react";
+import type { PaymentStatus } from "@prisma/client";
+import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import {
   BOOKING_AMOUNT_UAH_FACTOR,
   bookingStoredToUah,
@@ -32,6 +37,7 @@ export type InitialBookingValues = {
   ourProfit: number | null;
   prepaidToMe: number | null;
   prepaidToOwner: number | null;
+  paymentStatus?: PaymentStatus;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
 };
 
@@ -40,6 +46,9 @@ type BookingFormProps = {
   loading: boolean;
   initialBooking?: InitialBookingValues | null;
   submitLabel?: string;
+  bookingId?: string;
+  /** Скасування в формі — лише власник */
+  canCancelBookings?: boolean;
 };
 
 /** Гривні з 2 знаками після коми — без 1199.9999998 через float */
@@ -53,6 +62,8 @@ export default function BookingForm({
   loading,
   initialBooking,
   submitLabel,
+  bookingId,
+  canCancelBookings = false,
 }: BookingFormProps) {
   const [selectedApartment, setSelectedApartment] = useState<{
     id: string;
@@ -70,6 +81,9 @@ export default function BookingForm({
   const [status, setStatus] = useState<
     "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED"
   >("CONFIRMED");
+  const [paymentStatus, setPaymentStatus] =
+    useState<PaymentStatus>("UNPAID");
+  const [guestNotes, setGuestNotes] = useState("");
 
   // Фінансові показники в гривнях
   const [ownerPricePerNight, setOwnerPricePerNight] = useState(0); // грн/ніч
@@ -136,7 +150,16 @@ export default function BookingForm({
     setPrepaidToOwner(
       roundMoney2(bookingStoredToUah(initialBooking.prepaidToOwner) ?? 0),
     );
+    setPaymentStatus(initialBooking.paymentStatus ?? "UNPAID");
   }, [initialBooking]);
+
+  const { remainingToPay } = calcPrepaymentTotals({
+    clientTotal,
+    ownerTotalPrice,
+    ourProfit,
+    prepaidToMe,
+    prepaidToOwner,
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,6 +181,8 @@ export default function BookingForm({
       ourProfitUAH: ourProfit,
       prepaidToMe: uahToBookingStored(prepaidToMe),
       prepaidToOwner: uahToBookingStored(prepaidToOwner),
+      paymentStatus,
+      guestNotes,
       ownerPhone,
       status,
     });
@@ -189,6 +214,31 @@ export default function BookingForm({
         onGuestContactChange={setGuestContact}
       />
 
+      <GuestHistoryPanel
+        guestPhone={guestPhone}
+        guestName={guestName}
+        guestNotes={guestNotes}
+        onGuestNotesChange={setGuestNotes}
+        excludeBookingId={bookingId}
+      />
+
+      <PaymentStatusSelect
+        value={paymentStatus}
+        onChange={setPaymentStatus}
+      />
+
+      <MessageTemplatesCard
+        vars={{
+          guestName,
+          apartmentTitle: selectedApartment?.title,
+          dateFrom,
+          dateTo,
+          total: clientTotal,
+          remaining: remainingToPay,
+          address: selectedApartment?.city,
+        }}
+      />
+
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <ClipboardList size={20} className="text-blue-600" />
@@ -209,9 +259,18 @@ export default function BookingForm({
         >
           <option value="PENDING">Очікує</option>
           <option value="CONFIRMED">Підтверджено</option>
-          <option value="CANCELLED">Скасовано</option>
-          <option value="REJECTED">Відхилено</option>
+          {canCancelBookings && (
+            <>
+              <option value="CANCELLED">Скасовано</option>
+              <option value="REJECTED">Відхилено</option>
+            </>
+          )}
         </select>
+        {!canCancelBookings && (
+          <p className="mt-2 text-xs text-gray-500">
+            Скасувати бронювання може лише власник.
+          </p>
+        )}
       </div>
 
       <FinancialSection

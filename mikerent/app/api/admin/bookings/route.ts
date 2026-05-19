@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import type { BookingStatus } from "@prisma/client";
+import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
+import { getAdminEmail, requireOwner } from "@/lib/adminAuth";
+import { writeAuditLog } from "@/lib/admin/audit";
+import { upsertGuestFromBooking } from "@/lib/admin/guest";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -100,11 +103,27 @@ export async function POST(req: Request) {
           data.prepaidToMe != null ? Number(data.prepaidToMe) : null,
         prepaidToOwner:
           data.prepaidToOwner != null ? Number(data.prepaidToOwner) : null,
+        paymentStatus: (data.paymentStatus as PaymentStatus) || "UNPAID",
 
         // Додатково
         ownerPhone: data.ownerPhone,
         status: status as BookingStatus,
       },
+    });
+
+    await upsertGuestFromBooking({
+      guestPhone: data.guestPhone,
+      guestName: data.guestName,
+      guestNotes: data.guestNotes,
+    });
+
+    const adminEmail = (await getAdminEmail()) ?? "admin";
+    await writeAuditLog({
+      adminEmail,
+      entityType: "booking",
+      entityId: booking.id,
+      action: "create",
+      summary: `Нова бронь: ${data.guestName || "гість"}`,
     });
 
     return NextResponse.json(booking, { status: 201 });
@@ -116,9 +135,12 @@ export async function POST(req: Request) {
 
 // DELETE /api/admin/bookings?apartmentId=xxx - видалити всі бронювання квартири
 export async function DELETE(req: Request) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireOwner();
+  if (!session) {
+    return NextResponse.json(
+      { error: "Видалення бронювань доступне лише власнику" },
+      { status: 403 },
+    );
   }
 
   const { searchParams } = new URL(req.url);

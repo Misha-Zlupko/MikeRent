@@ -18,6 +18,8 @@ import { bookingStoredToUah } from "@/lib/bookingAmounts";
 import CancelBookingButton from "@/components/admin/bookings/CancelBookingButton";
 import RestoreBookingButton from "@/components/admin/bookings/RestoreBookingButton";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import PaymentBalanceCell from "@/components/admin/bookings/PaymentBalanceCell";
+import type { PaymentStatus } from "@prisma/client";
 
 export type BookingRowSerialized = {
   id: string;
@@ -32,6 +34,9 @@ export type BookingRowSerialized = {
   totalAmount: number | null;
   ownerPayout: number | null;
   ourProfit: number | null;
+  prepaidToMe: number | null;
+  prepaidToOwner: number | null;
+  paymentStatus: PaymentStatus;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
   apartment: {
     id: string;
@@ -147,9 +152,11 @@ const historyFilters: { id: HistoryFilterId; label: string }[] = [
 function BookingTableRow({
   booking,
   variant = "default",
+  canDeleteBookings = false,
 }: {
   booking: BookingRowSerialized;
   variant?: "default" | "history";
+  canDeleteBookings?: boolean;
 }) {
   const nights = calculateNights(booking.dateFrom, booking.dateTo);
   const now = new Date();
@@ -252,6 +259,18 @@ function BookingTableRow({
         {profitUah != null ? `${profitUah.toFixed(2)} грн` : "—"}
       </td>
       <td className="p-4 align-top">
+        <PaymentBalanceCell
+          dateFrom={booking.dateFrom}
+          dateTo={booking.dateTo}
+          totalAmount={booking.totalAmount}
+          ownerPayout={booking.ownerPayout}
+          ourProfit={booking.ourProfit}
+          prepaidToMe={booking.prepaidToMe}
+          prepaidToOwner={booking.prepaidToOwner}
+          paymentStatus={booking.paymentStatus}
+        />
+      </td>
+      <td className="p-4 align-top">
         <span className={`px-2 py-1 rounded-full text-xs ${statusClass}`}>
           {statusLabel}
         </span>
@@ -266,7 +285,10 @@ function BookingTableRow({
             <Pencil size={18} />
           </Link>
           {isActiveBookingStatus(booking.status) ? (
-            <CancelBookingButton id={booking.id} />
+            <CancelBookingButton
+              id={booking.id}
+              canCancel={canDeleteBookings}
+            />
           ) : (
             <RestoreBookingButton id={booking.id} />
           )}
@@ -281,11 +303,13 @@ function SectionBlock({
   subtitle,
   accentClass,
   bookings,
+  canDeleteBookings = false,
 }: {
   title: string;
   subtitle: string;
   accentClass: string;
   bookings: BookingRowSerialized[];
+  canDeleteBookings?: boolean;
 }) {
   if (bookings.length === 0) return null;
   return (
@@ -326,6 +350,9 @@ function SectionBlock({
                   Прибуток
                 </th>
                 <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Оплата / залишок
+                </th>
+                <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Статус
                 </th>
                 <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -335,7 +362,11 @@ function SectionBlock({
             </thead>
             <tbody>
               {bookings.map((b) => (
-                <BookingTableRow key={b.id} booking={b} />
+                <BookingTableRow
+                  key={b.id}
+                  booking={b}
+                  canDeleteBookings={canDeleteBookings}
+                />
               ))}
             </tbody>
           </table>
@@ -347,8 +378,11 @@ function SectionBlock({
 
 export default function BookingsListClient({
   bookings,
+  canDeleteBookings = false,
 }: {
   bookings: BookingRowSerialized[];
+  /** Скасування / повне видалення — лише власник */
+  canDeleteBookings?: boolean;
 }) {
   const [tab, setTab] = useState<TabId>("all");
   const [historyFilter, setHistoryFilter] = useState<HistoryFilterId>("all");
@@ -484,24 +518,28 @@ export default function BookingsListClient({
             subtitle="Гості перебувають у квартирі сьогодні"
             accentClass="border-emerald-500"
             bookings={grouped.active}
+            canDeleteBookings={canDeleteBookings}
           />
           <SectionBlock
             title="Очікують підтвердження"
             subtitle="Статус «Очікує» — потрібна ваша дія"
             accentClass="border-amber-500"
             bookings={grouped.pending}
+            canDeleteBookings={canDeleteBookings}
           />
           <SectionBlock
             title="Заплановані"
             subtitle="Підтверджені майбутні заїзди, найближчі зверху"
             accentClass="border-sky-500"
             bookings={grouped.upcoming}
+            canDeleteBookings={canDeleteBookings}
           />
           <SectionBlock
             title="Архів"
             subtitle="Завершені періоди та скасовані бронювання"
             accentClass="border-gray-400"
             bookings={grouped.archive}
+            canDeleteBookings={canDeleteBookings}
           />
         </div>
       )}
@@ -561,6 +599,9 @@ export default function BookingsListClient({
                         Прибуток
                       </th>
                       <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Оплата / залишок
+                      </th>
+                      <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                         Статус
                       </th>
                       <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -574,6 +615,7 @@ export default function BookingsListClient({
                         key={b.id}
                         booking={b}
                         variant="history"
+                        canDeleteBookings={canDeleteBookings}
                       />
                     ))}
                   </tbody>
@@ -614,6 +656,9 @@ export default function BookingsListClient({
                       Прибуток
                     </th>
                     <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Оплата / залишок
+                    </th>
+                    <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Статус
                     </th>
                     <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -623,7 +668,11 @@ export default function BookingsListClient({
                 </thead>
                 <tbody>
                   {filteredSingle.map((b) => (
-                    <BookingTableRow key={b.id} booking={b} />
+                    <BookingTableRow
+                      key={b.id}
+                      booking={b}
+                      canDeleteBookings={canDeleteBookings}
+                    />
                   ))}
                 </tbody>
               </table>

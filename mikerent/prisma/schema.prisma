@@ -18,13 +18,19 @@ enum ApartmentCategory {
   SHARED
 }
 
+enum AdminRole {
+  OWNER
+  WORKER
+}
+
 model Admin {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   password  String
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      AdminRole @default(WORKER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Apartment {
@@ -91,6 +97,7 @@ model Booking {
   ourProfit   Float?    // наш заробіток (totalAmount - ownerPayout)
   prepaidToMe    Float? // передоплата, яку отримав адмін (у форматі БД /42)
   prepaidToOwner Float? // передоплата, яку отримав хазяїн (у форматі БД /42)
+  paymentStatus  PaymentStatus @default(UNPAID)
   ownerPhone  String?   // номер хазяїна для зв'язку
 
   // Службова інформація
@@ -101,11 +108,48 @@ model Booking {
   @@map("bookings")
 }
 
+model Guest {
+  id              String   @id @default(cuid())
+  phoneNormalized String   @unique
+  name            String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminEmail String
+  entityType String
+  entityId   String
+  action     String
+  summary    String
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
   REJECTED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PREPAID_RECEIVED
+  BALANCE_AT_CHECKIN
+  PAID_IN_FULL
 }
 
 enum BookingRequestStatus {

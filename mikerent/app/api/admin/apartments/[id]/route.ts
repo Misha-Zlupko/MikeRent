@@ -7,6 +7,11 @@ import {
   mergeMonthlyGuestPrices,
   parseMonthlyNonNegative,
 } from "@/lib/monthlyPricing";
+import { getAdminEmail, requireOwner } from "@/lib/adminAuth";
+import {
+  summarizeApartmentPriceChanges,
+  writeAuditLog,
+} from "@/lib/admin/audit";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 const ALLOWED_CITIES = new Set(["Черноморск", "Санжейка"]);
@@ -27,11 +32,14 @@ async function verifyAdmin() {
 
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }, // ← Додай Promise
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireOwner();
+  if (!session) {
+    return NextResponse.json(
+      { error: "Видалення квартир доступне лише власнику" },
+      { status: 403 },
+    );
   }
 
   try {
@@ -288,6 +296,21 @@ export async function PUT(
       where: { id },
       data: apartmentData as any,
     });
+
+    const priceSummary = summarizeApartmentPriceChanges(
+      existing?.availability,
+      apartment.availability,
+    );
+    if (priceSummary) {
+      const adminEmail = (await getAdminEmail()) ?? "admin";
+      await writeAuditLog({
+        adminEmail,
+        entityType: "apartment",
+        entityId: id,
+        action: "update",
+        summary: priceSummary,
+      });
+    }
 
     return NextResponse.json(apartment);
   } catch (error) {

@@ -23,11 +23,13 @@ async function main() {
     update: {
       password: hashedPassword,
       name,
+      role: "OWNER",
     },
     create: {
       email,
       password: hashedPassword,
       name,
+      role: "OWNER",
     },
   });
 

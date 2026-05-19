@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "create-admin": "tsx scripts/create-admin.ts",
+    "create-worker": "tsx scripts/create-worker.ts",
     "migrate-db": "tsx scripts/migrate-neon-to-railway.ts",
     "backup-db": "tsx scripts/backup-database.ts"
   },

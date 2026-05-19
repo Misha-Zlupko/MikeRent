@@ -4,10 +4,27 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Home, Calendar, Users, PlusCircle, ClipboardList } from "lucide-react";
 import { BackupDataButton } from "@/components/admin/BackupDataButton";
+import SeasonDashboard from "@/components/admin/dashboard/SeasonDashboard";
+import AdminReminders from "@/components/admin/dashboard/AdminReminders";
+import AuditLogCard from "@/components/admin/dashboard/AuditLogCard";
+import ExportTools from "@/components/admin/ExportTools";
+import { getSeasonDashboardStats } from "@/lib/admin/seasonStats";
+import { getAdminReminders } from "@/lib/admin/reminders";
+import { getAdminSession, isOwner } from "@/lib/adminAuth";
+import { getWorkerActivityToday } from "@/lib/admin/workerActivity";
+import ManageWorkersCard from "@/components/admin/dashboard/ManageWorkersCard";
+import WorkerActivityPanel from "@/components/admin/dashboard/WorkerActivityPanel";
+import PaymentOverviewPanel from "@/components/admin/dashboard/PaymentOverviewPanel";
+import { getPaymentOverview } from "@/lib/admin/paymentOverview";
 
 export default async function AdminDashboard() {
+  const seasonYear = new Date().getFullYear();
+  const session = await getAdminSession();
   const adminEmail =
-    process.env.ADMIN_EMAIL?.trim() || "admin@mikerent.com";
+    session?.email ||
+    process.env.ADMIN_EMAIL?.trim() ||
+    "admin@mikerent.com";
+  const owner = session ? isOwner(session) : true;
   const prismaAny = prisma as typeof prisma & {
     bookingRequest: {
       count: (args: unknown) => Promise<number>;
@@ -16,8 +33,18 @@ export default async function AdminDashboard() {
 
   // Отримуємо статистику з бази даних
   const activeCutoff = new Date(Date.now() - 10 * 60 * 1000);
-  const [apartmentsCount, bookingsCount, requestsCount, activeUsersCount, recentBookings] =
-    await Promise.all([
+  const [
+    apartmentsCount,
+    bookingsCount,
+    requestsCount,
+    activeUsersCount,
+    recentBookings,
+    seasonStats,
+    reminders,
+    auditLogs,
+    workerActivity,
+    paymentOverview,
+  ] = await Promise.all([
     prisma.apartment.count(),
     prisma.booking.count(),
     prismaAny.bookingRequest.count({
@@ -33,6 +60,11 @@ export default async function AdminDashboard() {
       orderBy: { createdAt: "desc" },
       include: { apartment: true },
     }),
+    getSeasonDashboardStats(seasonYear),
+    getAdminReminders(),
+    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 15 }),
+    owner ? getWorkerActivityToday() : Promise.resolve(null),
+    getPaymentOverview(),
   ]);
 
   return (
@@ -46,7 +78,20 @@ export default async function AdminDashboard() {
               <h1 className="text-xl font-bold">Mikerent Admin</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{adminEmail}</span>
+              <span className="text-sm text-gray-600">
+                {adminEmail}
+                {session && (
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                      owner
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {owner ? "Власник" : "Співробітник"}
+                  </span>
+                )}
+              </span>
               <form action="/api/admin/logout" method="POST">
                 <button className="text-sm text-red-600 hover:text-red-800">
                   Вийти
@@ -144,6 +189,38 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
+        <div className="mb-8">
+          <PaymentOverviewPanel
+            checkedInUnpaid={paymentOverview.checkedInUnpaid}
+            upcomingUnpaid={paymentOverview.upcomingUnpaid}
+          />
+        </div>
+
+        {owner && workerActivity && (
+          <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <WorkerActivityPanel
+              since={workerActivity.since}
+              workers={workerActivity.workers}
+              apartmentsCreatedToday={workerActivity.apartmentsCreatedToday}
+            />
+            <ManageWorkersCard />
+          </div>
+        )}
+
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <SeasonDashboard
+            year={seasonStats.year}
+            months={seasonStats.months}
+            totals={seasonStats.totals}
+          />
+          <AdminReminders items={reminders} />
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ExportTools />
+          <AuditLogCard logs={auditLogs} />
+        </div>
+
         {/* Останні бронювання */}
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -190,7 +267,7 @@ export default async function AdminDashboard() {
                           : "Скасовано"}
                     </span>
                     <Link
-                      href={`/admin/bookings/${booking.id}`}
+                      href={`/admin/bookings/edit/${booking.id}`}
                       className="text-sm text-blue-600 hover:text-blue-800"
                     >
                       Деталі
@@ -219,7 +296,7 @@ export default async function AdminDashboard() {
             (Neon/Railway). Раз на тиждень завантажуйте копію на комп&apos;ютер —
             тоді записи не зникнуть навіть при помилці або збої хостингу.
           </p>
-          <BackupDataButton variant="primary" />
+          <BackupDataButton variant="primary" allowed={owner} />
         </div>
 
         {/* Швидкі дії */}

@@ -7,6 +7,8 @@ import {
   mergeMonthlyGuestPrices,
   parseMonthlyNonNegative,
 } from "@/lib/monthlyPricing";
+import { getAdminEmail } from "@/lib/adminAuth";
+import { writeAuditLog } from "@/lib/admin/audit";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 const ALLOWED_CITIES = new Set(["Черноморск", "Санжейка"]);
@@ -231,6 +233,15 @@ export async function POST(req: Request) {
 
     const apartment = await prisma.apartment.create({
       data: apartmentData as any,
+    });
+
+    const adminEmail = (await getAdminEmail()) ?? "admin";
+    await writeAuditLog({
+      adminEmail,
+      entityType: "apartment",
+      entityId: apartment.id,
+      action: "create",
+      summary: `Додано квартиру: ${apartment.title}`,
     });
 
     return NextResponse.json(apartment, { status: 201 });

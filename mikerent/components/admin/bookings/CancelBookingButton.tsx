@@ -3,8 +3,16 @@
 import { Ban } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function CancelBookingButton({ id }: { id: string }) {
+export default function CancelBookingButton({
+  id,
+  canCancel = true,
+}: {
+  id: string;
+  canCancel?: boolean;
+}) {
   const router = useRouter();
+
+  if (!canCancel) return null;
 
   const handleCancel = async () => {
     if (

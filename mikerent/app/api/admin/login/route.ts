@@ -35,9 +35,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = sign({ id: admin.id, email: admin.email }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const role = admin.role ?? "OWNER";
+    const token = sign(
+      { id: admin.id, email: admin.email, role },
+      JWT_SECRET,
+      { expiresIn: "7d" },
+    );
 
     const cookieStore = await cookies();
     cookieStore.set("admin_token", token, {
@@ -49,7 +52,11 @@ export async function POST(req: Request) {
     });
 
     console.log("Login successful");
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      role,
+      email: admin.email,
+    });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json({ error: "Помилка сервера" }, { status: 500 });

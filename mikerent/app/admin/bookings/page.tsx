@@ -6,7 +6,10 @@ import { prisma } from "@/lib/prisma";
 import BookingsListClient, {
   type BookingRowSerialized,
 } from "@/components/admin/bookings/BookingsListClient";
+import ExportTools from "@/components/admin/ExportTools";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { getAdminSession } from "@/lib/adminAuth";
+import { canDeleteBookings } from "@/lib/adminPermissions";
 
 async function getBookings() {
   return prisma.booking.findMany({
@@ -31,6 +34,9 @@ function serializeBookings(
     totalAmount: b.totalAmount,
     ownerPayout: b.ownerPayout,
     ourProfit: b.ourProfit,
+    prepaidToMe: b.prepaidToMe,
+    prepaidToOwner: b.prepaidToOwner,
+    paymentStatus: b.paymentStatus,
     status: b.status,
     createdAt: b.createdAt.toISOString(),
     updatedAt: b.updatedAt.toISOString(),
@@ -44,6 +50,8 @@ function serializeBookings(
 }
 
 export default async function BookingsPage() {
+  const session = await getAdminSession();
+  const canRemoveBookings = session ? canDeleteBookings(session) : false;
   const raw = await getBookings();
   const bookings = serializeBookings(raw);
   const today = new Date();
@@ -86,13 +94,16 @@ export default async function BookingsPage() {
             </div>
           </div>
 
-          <Link
-            href="/admin/bookings/new"
-            className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 shadow-sm"
-          >
-            <Plus size={18} />
-            <span>Додати бронювання</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <ExportTools compact />
+            <Link
+              href="/admin/bookings/new"
+              className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 shadow-sm"
+            >
+              <Plus size={18} />
+              <span>Додати бронювання</span>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -115,7 +126,10 @@ export default async function BookingsPage() {
         </div>
       </div>
 
-      <BookingsListClient bookings={bookings} />
+      <BookingsListClient
+        bookings={bookings}
+        canDeleteBookings={canRemoveBookings}
+      />
     </div>
   );
 }

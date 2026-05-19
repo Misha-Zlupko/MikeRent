@@ -7,9 +7,16 @@ type Props = {
   id: string;
   /** Назва квартири — для чіткого підтвердження видалення */
   title?: string;
+  /** Лише власник; для співробітника кнопку не показуємо */
+  canDelete?: boolean;
 };
 
-export default function DeleteButton({ id, title }: Props) {
+export default function DeleteButton({
+  id,
+  title,
+  canDelete = true,
+}: Props) {
+  if (!canDelete) return null;
   const router = useRouter();
 
   const handleDelete = async () => {

@@ -23,6 +23,7 @@ type BookingApi = {
   ourProfit: number | null;
   prepaidToMe: number | null;
   prepaidToOwner: number | null;
+  paymentStatus?: "UNPAID" | "PREPAID_RECEIVED" | "BALANCE_AT_CHECKIN" | "PAID_IN_FULL";
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
   apartment: {
     id: string;
@@ -39,6 +40,18 @@ export default function EditBookingPage() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingApi | null>(null);
+  const [canCancelBookings, setCanCancelBookings] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.permissions?.canDeleteBookings) {
+          setCanCancelBookings(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +103,7 @@ export default function EditBookingPage() {
       ourProfit: booking.ourProfit,
       prepaidToMe: booking.prepaidToMe,
       prepaidToOwner: booking.prepaidToOwner,
+      paymentStatus: booking.paymentStatus,
       status: booking.status,
     };
   }, [booking]);
@@ -157,10 +171,12 @@ export default function EditBookingPage() {
         {initialBooking && (
           <BookingForm
             key={id}
+            bookingId={id}
             initialBooking={initialBooking}
             onSubmit={handleSubmit}
             loading={loading}
             submitLabel="Зберегти зміни"
+            canCancelBookings={canCancelBookings}
           />
         )}
       </main>

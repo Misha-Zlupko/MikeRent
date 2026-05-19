@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAdmin } from "@/lib/adminAuth";
+import { requireOwner } from "@/lib/adminAuth";
 import { exportDatabaseSnapshot } from "@/lib/backup/exportDatabaseSnapshot";
 
 export async function GET() {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireOwner())) {
+    return NextResponse.json(
+      { error: "Резервна копія доступна лише власнику" },
+      { status: 403 },
+    );
   }
 
   try {

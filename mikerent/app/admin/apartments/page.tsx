@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import DeleteButton from "@/components/admin/DeleteButton";
 import CallCheckButton from "@/components/admin/CallCheckButton";
 import { BackupDataButton } from "@/components/admin/BackupDataButton";
+import ExportTools from "@/components/admin/ExportTools";
+import DuplicateApartmentButton from "@/components/admin/DuplicateApartmentButton";
+import { getAdminSession, isOwner } from "@/lib/adminAuth";
+import { canDeleteApartments } from "@/lib/adminPermissions";
 
 async function getApartments() {
   const apartments = await prisma.apartment.findMany({
@@ -20,6 +24,8 @@ async function getApartments() {
 }
 
 export default async function ApartmentsPage() {
+  const session = await getAdminSession();
+  const canDelete = session ? canDeleteApartments(session) : false;
   const apartments = await getApartments();
   const now = Date.now();
   const twelveHoursMs = 12 * 60 * 60 * 1000;
@@ -177,7 +183,15 @@ export default async function ApartmentsPage() {
               >
                 <Pencil size={18} />
               </Link>
-              <DeleteButton id={apt.id} title={apt.title} />
+              <DuplicateApartmentButton
+                apartmentId={apt.id}
+                title={apt.title}
+              />
+              <DeleteButton
+                id={apt.id}
+                title={apt.title}
+                canDelete={canDelete}
+              />
             </div>
           </td>
         </tr>
@@ -214,7 +228,8 @@ export default async function ApartmentsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <BackupDataButton />
+              <ExportTools compact />
+              <BackupDataButton allowed={session ? isOwner(session) : false} />
               <Link
                 href="/admin/apartments/new"
                 className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-white shadow-sm transition-colors duration-200 hover:bg-blue-700"

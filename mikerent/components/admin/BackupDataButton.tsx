@@ -6,12 +6,16 @@ import { Download, Loader2, Shield } from "lucide-react";
 type Props = {
   variant?: "primary" | "outline";
   className?: string;
+  /** Резервна копія лише для власника */
+  allowed?: boolean;
 };
 
 export function BackupDataButton({
   variant = "outline",
   className = "",
+  allowed = true,
 }: Props) {
+  if (!allowed) return null;
   const [loading, setLoading] = useState(false);
 
   const handleDownload = async () => {

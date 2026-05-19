@@ -1,38 +1,39 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verify } from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { getAdminSession } from "@/lib/adminAuth";
+import { writeAuditLog } from "@/lib/admin/audit";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
-
-async function verifyAdmin() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    verify(token, JWT_SECRET);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// POST /api/admin/apartments/[id]/call-check
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) {
+  const session = await getAdminSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const { id } = await params;
+    const existing = await prisma.apartment.findUnique({
+      where: { id },
+      select: { id: true, title: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const apartment = await prisma.apartment.update({
       where: { id },
       data: { lastCalledAt: new Date() },
       select: { id: true, lastCalledAt: true },
+    });
+
+    await writeAuditLog({
+      adminEmail: session.email,
+      entityType: "apartment",
+      entityId: id,
+      action: "call_check",
+      summary: `Прозвон: ${existing.title}`,
     });
 
     return NextResponse.json(apartment);
