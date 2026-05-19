@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { IMAGE_WIDTH } from "@/lib/optimizeImageUrl";
 import { Heart, Share2, Maximize2 } from "lucide-react";
 
 import "swiper/css";
@@ -114,11 +115,12 @@ export const ApartmentGallery = ({ apartment }: Props) => {
           {images.map((src, index) => (
             <SwiperSlide key={`${src}-${index}`}>
               <div className="relative aspect-[4/3] md:aspect-[16/9]">
-                <Image
+                <OptimizedImage
                   src={src}
                   alt={apartment.title}
                   fill
                   priority={index === 0}
+                  optimizeWidth={IMAGE_WIDTH.gallery}
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 70vw"
                 />
@@ -157,10 +159,13 @@ export const ApartmentGallery = ({ apartment }: Props) => {
             {images.map((src, index) => (
               <SwiperSlide key={`thumb-${src}-${index}`}>
                 <div className="relative aspect-[4/3] cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all duration-200">
-                  <Image
+                  <OptimizedImage
                     src={src}
                     alt={`${apartment.title} thumbnail ${index + 1}`}
                     fill
+                    optimizeWidth={IMAGE_WIDTH.galleryThumb}
+                    sizes="120px"
+                    loading="lazy"
                     className="object-cover hover:scale-110 transition-transform duration-300"
                   />
                 </div>

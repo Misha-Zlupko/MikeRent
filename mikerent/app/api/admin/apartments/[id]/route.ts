@@ -37,15 +37,9 @@ export async function DELETE(
   try {
     const { id } = await params; // ← Додай await
 
-    // Спочатку видаляємо всі бронювання
-    await prisma.booking.deleteMany({
-      where: { apartmentId: id }, // ← використовуй id
-    });
-
-    // Потім видаляємо квартиру
-    await prisma.apartment.delete({
-      where: { id: id }, // ← використовуй id
-    });
+    await prisma.bookingRequest.deleteMany({ where: { apartmentId: id } });
+    await prisma.booking.deleteMany({ where: { apartmentId: id } });
+    await prisma.apartment.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -3,6 +3,7 @@
 import * as React from "react";
 
 const INTERVAL_MS = 2 * 60 * 1000;
+const START_DELAY_MS = 8_000;
 
 async function sendHeartbeat() {
   try {
@@ -22,7 +23,7 @@ export function ActivityHeartbeat() {
       timer = window.setInterval(() => void sendHeartbeat(), INTERVAL_MS);
     };
 
-    kick();
+    const startTimer = window.setTimeout(kick, START_DELAY_MS);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") kick();
@@ -32,6 +33,7 @@ export function ActivityHeartbeat() {
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
+      window.clearTimeout(startTimer);
       if (timer) window.clearInterval(timer);
       window.removeEventListener("focus", kick);
       document.removeEventListener("visibilitychange", onVisibility);

@@ -44,17 +44,16 @@ export type Apartment = {
   bathrooms: number;
 
   images: string[];
+  /** Скільки фото в об'єкті (для бейджа на головній, якщо в images лише обкладинка) */
+  photoCount?: number;
 
   description: string;
 
   mapUrl: string;
   amenities: string[];
 
-  /** Поверх квартири (опційно) */
   floor?: number | null;
-  /** Усього поверхів у будинку (опційно) */
   totalFloors?: number | null;
-  /** Посилання на відеоогляд (опційно) */
   videoTourUrl?: string | null;
 
   availability: ApartmentAvailability;

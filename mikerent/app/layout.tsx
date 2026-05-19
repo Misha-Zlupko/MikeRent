@@ -4,12 +4,13 @@ import { Roboto } from "next/font/google";
 
 import { HeaderComponent } from "@/components/HeaderComponent";
 import { FooterComponent } from "@/components/FooterComponent";
-import { ActivityHeartbeat } from "@/components/ActivityHeartbeat";
+import { ActivityHeartbeatLazy } from "@/components/ActivityHeartbeatLazy";
 
 const roboto = Roboto({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "700"],
   variable: "--font-roboto",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -76,7 +77,7 @@ export default function RootLayout({
           bg-bg text-text
         `}
       >
-        <ActivityHeartbeat />
+        <ActivityHeartbeatLazy />
         <HeaderComponent />
 
         <main className="flex-1">{children}</main>

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   calculateTotalByMonth,
+  getDisplayNightlyPrice,
   getMissingPriceMonths,
 } from "@/lib/monthlyPricing";
 
@@ -40,6 +41,10 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
   const [checkOut, setCheckOut] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const monthlyPrices = apartment.availability.monthlyPrices ?? {};
+  const displayNightlyPrice = getDisplayNightlyPrice(
+    monthlyPrices,
+    apartment.pricePerNight,
+  );
 
   const formatMissingMonths = (months: string[]) =>
     months
@@ -54,7 +59,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
 
   const calculateTotal = () => {
     if (!checkIn || !checkOut) {
-      return apartment.pricePerNight * 3;
+      return displayNightlyPrice * 3;
     }
     
     const startDate = new Date(checkIn);
@@ -156,7 +161,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
       <div className="sticky top-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="mb-6">
           <span className="text-2xl font-bold">
-            {apartment.pricePerNight} ₴
+            {displayNightlyPrice} ₴
           </span>
           <span className="text-sm text-gray-500"> / ніч</span>
         </div>
@@ -379,7 +384,7 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
               getMissingPriceMonths(new Date(checkIn), new Date(checkOut), monthlyPrices)
                 .length === 0
                 ? Math.round(totalPrice / Math.max(nights, 1))
-                : apartment.pricePerNight)} ₴ × {nights}{" "}
+                : displayNightlyPrice)} ₴ × {nights}{" "}
                   {nights === 1 ? "ніч" : nights < 5 ? "ночі" : "ночей"}
                 </span>
                 <p className="text-xs text-gray-500 mt-1">

@@ -89,6 +89,8 @@ model Booking {
   totalAmount Float?    // сума, яку заплатив клієнт
   ownerPayout Float?    // скільки віддати хазяїну
   ourProfit   Float?    // наш заробіток (totalAmount - ownerPayout)
+  prepaidToMe    Float? // передоплата, яку отримав адмін (у форматі БД /42)
+  prepaidToOwner Float? // передоплата, яку отримав хазяїн (у форматі БД /42)
   ownerPhone  String?   // номер хазяїна для зв'язку
 
   // Службова інформація

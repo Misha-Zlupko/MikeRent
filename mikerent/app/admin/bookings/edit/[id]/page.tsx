@@ -21,6 +21,8 @@ type BookingApi = {
   totalAmount: number | null;
   ownerPayout: number | null;
   ourProfit: number | null;
+  prepaidToMe: number | null;
+  prepaidToOwner: number | null;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
   apartment: {
     id: string;
@@ -86,6 +88,8 @@ export default function EditBookingPage() {
       totalAmount: booking.totalAmount,
       ownerPayout: booking.ownerPayout,
       ourProfit: booking.ourProfit,
+      prepaidToMe: booking.prepaidToMe,
+      prepaidToOwner: booking.prepaidToOwner,
       status: booking.status,
     };
   }, [booking]);

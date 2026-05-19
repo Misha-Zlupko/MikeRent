@@ -13,6 +13,30 @@ export function getMonthKey(date: Date): string {
   return `${year}-${month}`;
 }
 
+/** Ціна за ніч для конкретної дати (місячна ціна = ціна за ніч у цьому місяці). */
+export function getNightlyPriceForDate(
+  date: Date,
+  monthlyPrices: MonthlyPrices,
+  fallback = 0,
+): number {
+  return monthlyPrices[getMonthKey(date)] ?? fallback;
+}
+
+/**
+ * Ціна для показу в каталозі: за датою пошуку (заїзд) або за сьогодні.
+ * Якщо для місяця немає ціни — fallback (зазвичай pricePerNight з БД).
+ */
+export function getDisplayNightlyPrice(
+  monthlyPrices: MonthlyPrices,
+  fallback: number,
+  anchorDate?: Date | null,
+): number {
+  const date = anchorDate ? new Date(anchorDate) : new Date();
+  date.setHours(0, 0, 0, 0);
+  const price = getNightlyPriceForDate(date, monthlyPrices, 0);
+  return price > 0 ? price : fallback;
+}
+
 function parseMonthlyPositive(
   raw: unknown,
 ): MonthlyPrices {

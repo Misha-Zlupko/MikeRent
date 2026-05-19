@@ -18,16 +18,15 @@ type Props = {
   nights: number;
   ownerPricePerNight: number;
   markupPerNight: number;
-  paidAmount: number;
-  prepaidTo: "me" | "owner";
+  prepaidToMe: number;
+  prepaidToOwner: number;
   onOwnerPriceChange: (value: number) => void;
   onMarkupChange: (value: number) => void;
-  onPaidAmountChange: (value: number) => void;
-  onPrepaidToChange: (value: "me" | "owner") => void;
+  onPrepaidToMeChange: (value: number) => void;
+  onPrepaidToOwnerChange: (value: number) => void;
   ownerTotalPrice: number;
   clientTotal: number;
   ourProfit: number;
-  remainingToPay: number;
 };
 
 export default function FinancialSection({
@@ -35,16 +34,15 @@ export default function FinancialSection({
   nights,
   ownerPricePerNight,
   markupPerNight,
-  paidAmount,
-  prepaidTo,
+  prepaidToMe,
+  prepaidToOwner,
   onOwnerPriceChange,
   onMarkupChange,
-  onPaidAmountChange,
-  onPrepaidToChange,
+  onPrepaidToMeChange,
+  onPrepaidToOwnerChange,
   ownerTotalPrice,
   clientTotal,
   ourProfit,
-  remainingToPay,
 }: Props) {
   // ✅ Правильно: зміна стану тільки в useEffect
   useEffect(() => {
@@ -85,23 +83,21 @@ export default function FinancialSection({
       />
 
       <PrepaymentSection
-        paidAmount={paidAmount}
-        onPaidAmountChange={onPaidAmountChange}
-        remainingToPay={remainingToPay}
-        prepaidTo={prepaidTo}
-        onPrepaidToChange={onPrepaidToChange}
-        nights={nights}
-        ownerPricePerNight={ownerPricePerNight}
-        markupPerNight={markupPerNight}
+        prepaidToMe={prepaidToMe}
+        prepaidToOwner={prepaidToOwner}
+        onPrepaidToMeChange={onPrepaidToMeChange}
+        onPrepaidToOwnerChange={onPrepaidToOwnerChange}
+        clientTotal={clientTotal}
+        ownerTotalPrice={ownerTotalPrice}
+        ourProfit={ourProfit}
       />
 
       <TotalSummary
         clientTotal={clientTotal}
-        paidAmount={paidAmount}
         ownerTotalPrice={ownerTotalPrice}
         ourProfit={ourProfit}
-        remainingToPay={remainingToPay}
-        prepaidTo={prepaidTo}
+        prepaidToMe={prepaidToMe}
+        prepaidToOwner={prepaidToOwner}
       />
     </div>
   );

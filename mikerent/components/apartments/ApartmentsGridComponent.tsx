@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { Apartment, ApartmentType } from "@/data/ApartmentsTypes";
 import { ApartmentCard } from "./ApartmentCardComponent";
 import { DateRange } from "../SeasonCalendarComponent";
-import { getMissingPriceMonths } from "@/lib/monthlyPricing";
+import {
+  getDisplayNightlyPrice,
+  getMissingPriceMonths,
+} from "@/lib/monthlyPricing";
 
 type Props = {
   apartments: Apartment[];
@@ -81,7 +84,20 @@ export const ApartmentsGrid = ({
 
         return true;
       })
-      .sort((a, b) => a.pricePerNight - b.pricePerNight);
+      .sort((a, b) => {
+        const anchor = dateRange.from ?? new Date();
+        const priceA = getDisplayNightlyPrice(
+          a.availability.monthlyPrices ?? {},
+          a.pricePerNight,
+          anchor,
+        );
+        const priceB = getDisplayNightlyPrice(
+          b.availability.monthlyPrices ?? {},
+          b.pricePerNight,
+          anchor,
+        );
+        return priceA - priceB;
+      });
   }, [apartments, typeFilter, guests, dateRange]);
 
   // Сброс количества видимых карточек при смене фильтров
@@ -142,8 +158,13 @@ export const ApartmentsGrid = ({
               lg:grid-cols-4
             "
           >
-            {visibleApartments.map((apartment) => (
-              <ApartmentCard key={apartment.id} apartment={apartment} />
+            {visibleApartments.map((apartment, index) => (
+              <ApartmentCard
+                key={apartment.id}
+                apartment={apartment}
+                priceAnchorDate={dateRange.from}
+                priority={index < 4}
+              />
             ))}
           </div>
 

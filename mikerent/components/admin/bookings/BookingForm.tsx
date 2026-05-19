@@ -7,7 +7,11 @@ import GuestInfo from "./GuestInfo";
 import FinancialSection from "./FinancialSection";
 import FormActions from "./FormActions";
 import { ClipboardList } from "lucide-react";
-import { BOOKING_AMOUNT_UAH_FACTOR } from "@/lib/bookingAmounts";
+import {
+  BOOKING_AMOUNT_UAH_FACTOR,
+  bookingStoredToUah,
+  uahToBookingStored,
+} from "@/lib/bookingAmounts";
 
 export type InitialBookingValues = {
   apartment: {
@@ -26,6 +30,8 @@ export type InitialBookingValues = {
   totalAmount: number | null;
   ownerPayout: number | null;
   ourProfit: number | null;
+  prepaidToMe: number | null;
+  prepaidToOwner: number | null;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
 };
 
@@ -65,13 +71,11 @@ export default function BookingForm({
     "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED"
   >("CONFIRMED");
 
-  // Стан для передоплати
-  const [prepaidTo, setPrepaidTo] = useState<"me" | "owner">("me");
-
   // Фінансові показники в гривнях
   const [ownerPricePerNight, setOwnerPricePerNight] = useState(0); // грн/ніч
   const [markupPerNight, setMarkupPerNight] = useState(0); // грн/ніч (мій прибуток)
-  const [paidAmount, setPaidAmount] = useState(0); // грн (передоплата)
+  const [prepaidToMe, setPrepaidToMe] = useState(0);
+  const [prepaidToOwner, setPrepaidToOwner] = useState(0);
 
   // Розрахунок ночей
   const nights =
@@ -88,7 +92,6 @@ export default function BookingForm({
     (ownerPricePerNight + markupPerNight) * nights,
   );
   const ourProfit = roundMoney2(markupPerNight * nights);
-  const remainingToPay = roundMoney2(clientTotal - paidAmount);
 
   useEffect(() => {
     if (!initialBooking) return;
@@ -127,8 +130,12 @@ export default function BookingForm({
       setOwnerPricePerNight(0);
       setMarkupPerNight(0);
     }
-    setPaidAmount(0);
-    setPrepaidTo("me");
+    setPrepaidToMe(
+      roundMoney2(bookingStoredToUah(initialBooking.prepaidToMe) ?? 0),
+    );
+    setPrepaidToOwner(
+      roundMoney2(bookingStoredToUah(initialBooking.prepaidToOwner) ?? 0),
+    );
   }, [initialBooking]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -149,8 +156,8 @@ export default function BookingForm({
       totalAmountUAH: clientTotal,
       ownerPayoutUAH: ownerTotalPrice,
       ourProfitUAH: ourProfit,
-      prepaidUAH: paidAmount,
-      prepaidTo,
+      prepaidToMe: uahToBookingStored(prepaidToMe),
+      prepaidToOwner: uahToBookingStored(prepaidToOwner),
       ownerPhone,
       status,
     });
@@ -212,16 +219,15 @@ export default function BookingForm({
         nights={nights}
         ownerPricePerNight={ownerPricePerNight}
         markupPerNight={markupPerNight}
-        paidAmount={paidAmount}
-        prepaidTo={prepaidTo}
+        prepaidToMe={prepaidToMe}
+        prepaidToOwner={prepaidToOwner}
         onOwnerPriceChange={setOwnerPricePerNight}
         onMarkupChange={setMarkupPerNight}
-        onPaidAmountChange={setPaidAmount}
-        onPrepaidToChange={setPrepaidTo}
+        onPrepaidToMeChange={setPrepaidToMe}
+        onPrepaidToOwnerChange={setPrepaidToOwner}
         ownerTotalPrice={ownerTotalPrice}
         clientTotal={clientTotal}
         ourProfit={ourProfit}
-        remainingToPay={remainingToPay}
       />
 
       <FormActions loading={loading} submitLabel={submitLabel} />

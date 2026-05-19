@@ -189,6 +189,10 @@ export async function PUT(
         totalAmount: data.totalAmount != null ? Number(data.totalAmount) : null,
         ownerPayout: data.ownerPayout != null ? Number(data.ownerPayout) : null,
         ourProfit: data.ourProfit != null ? Number(data.ourProfit) : null,
+        prepaidToMe:
+          data.prepaidToMe != null ? Number(data.prepaidToMe) : null,
+        prepaidToOwner:
+          data.prepaidToOwner != null ? Number(data.prepaidToOwner) : null,
         ownerPhone: data.ownerPhone || null,
         status: status as BookingStatus,
       },

@@ -8,20 +8,14 @@ import type { Apartment } from "@/data/ApartmentsTypes";
 import type { ApartmentType } from "@/data/ApartmentsTypes";
 import type { DateRange as CalendarDateRange } from "@/components/SeasonCalendarComponent";
 import { ButtonFilterApartments } from "@/components/buttons/ButtonFilterComponent";
+import { LazyWhenVisible } from "@/components/ui/LazyWhenVisible";
 
 const CustomerComments = dynamic(
   () =>
     import("@/components/СustomerСommentsComponent").then(
       (m) => m.CustomerComments,
     ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="container py-10 text-center text-sm text-gray-400">
-        Завантаження відгуків...
-      </div>
-    ),
-  },
+  { ssr: false },
 );
 
 type DateRange = {
@@ -57,39 +51,39 @@ export function HomeClient({ apartments }: Props) {
 
   return (
     <main>
-<section className="relative mb-12 overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50/30 to-white">
-  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/30 via-transparent to-transparent" />
-  <div className="container relative mx-auto px-4 py-12 sm:py-16 md:py-20">
-    <div className="mx-auto max-w-2xl text-center">
-      <div className="mb-4 inline-block rounded-full bg-blue-100 px-4 py-1">
-        <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">
-          Подобова оренда
-        </span>
-      </div>
-      <h1 className="mb-4 text-3xl font-bold text-gray-800 sm:text-4xl md:text-5xl">
-        Житло в <span className="text-blue-600">Чорноморську</span>
-      </h1>
-      <p className="mb-8 text-gray-500">
-        Зручний пошук квартир та будинків для вашого відпочинку біля моря
-      </p>
-      <div className="rounded-xl bg-white shadow-sm border border-gray-100 p-5">
-        <SearchForm
-          dateRange={dateRange as CalendarDateRange}
-          adults={adults}
-          childrenCount={childrenCount}
-          onSearch={handleSearch}
-        />
-        <div className="mt-4">
-          <ButtonFilterApartments
-            value={typeFilter}
-            onChange={setTypeFilter}
-          />
+      <section className="relative mb-12 overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50/30 to-white">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/30 via-transparent to-transparent" />
+        <div className="container relative mx-auto px-4 py-12 sm:py-16 md:py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-4 inline-block rounded-full bg-blue-100 px-4 py-1">
+              <span className="text-xs font-medium uppercase tracking-wider text-blue-700">
+                Подобова оренда
+              </span>
+            </div>
+            <h1 className="mb-4 text-3xl font-bold text-gray-800 sm:text-4xl md:text-5xl">
+              Житло в <span className="text-blue-600">Чорноморську</span>
+            </h1>
+            <p className="mb-8 text-gray-500">
+              Зручний пошук квартир та будинків для вашого відпочинку біля моря
+            </p>
+            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+              <SearchForm
+                dateRange={dateRange as CalendarDateRange}
+                adults={adults}
+                childrenCount={childrenCount}
+                onSearch={handleSearch}
+              />
+              <div className="mt-4">
+                <ButtonFilterApartments
+                  value={typeFilter}
+                  onChange={setTypeFilter}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-        
+      </section>
+
       <section className="container mb-8">
         <ApartmentsGrid
           apartments={apartments}
@@ -98,8 +92,11 @@ export function HomeClient({ apartments }: Props) {
           typeFilter={typeFilter}
         />
       </section>
+
       <section className="inset-0 bg-gradient-to-br from-indigo-50 via-white to-pink-50">
-        <CustomerComments />
+        <LazyWhenVisible minHeight={320} rootMargin="400px 0px">
+          <CustomerComments />
+        </LazyWhenVisible>
       </section>
     </main>
   );

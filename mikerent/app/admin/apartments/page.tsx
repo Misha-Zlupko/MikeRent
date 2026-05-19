@@ -5,6 +5,7 @@ import { Plus, Pencil, Eye, ArrowLeft, Phone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import DeleteButton from "@/components/admin/DeleteButton";
 import CallCheckButton from "@/components/admin/CallCheckButton";
+import { BackupDataButton } from "@/components/admin/BackupDataButton";
 
 async function getApartments() {
   const apartments = await prisma.apartment.findMany({
@@ -176,7 +177,7 @@ export default async function ApartmentsPage() {
               >
                 <Pencil size={18} />
               </Link>
-              <DeleteButton id={apt.id} />
+              <DeleteButton id={apt.id} title={apt.title} />
             </div>
           </td>
         </tr>
@@ -212,13 +213,16 @@ export default async function ApartmentsPage() {
               </div>
             </div>
 
-            <Link
-              href="/admin/apartments/new"
-              className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 shadow-sm"
-            >
-              <Plus size={18} />
-              <span>Додати квартиру</span>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <BackupDataButton />
+              <Link
+                href="/admin/apartments/new"
+                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-white shadow-sm transition-colors duration-200 hover:bg-blue-700"
+              >
+                <Plus size={18} />
+                <span>Додати квартиру</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

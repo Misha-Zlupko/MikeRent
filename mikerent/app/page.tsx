@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic";
+/** Кеш сторінки: оновлення цін і броней щохвилини */
+export const revalidate = 60;
 
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
@@ -26,17 +27,11 @@ async function getApartments(): Promise<Apartment[]> {
       address: true,
       pricePerNight: true,
       guests: true,
-      bedrooms: true,
       beds: true,
-      bathrooms: true,
       images: true,
-      description: true,
-      mapUrl: true,
-      amenities: true,
+      seaDistanceMin: true,
+      seaDistanceMax: true,
       availability: true,
-      floor: true,
-      totalFloors: true,
-      videoTourUrl: true,
       bookings: {
         where: { status: { notIn: [...INACTIVE_BOOKING_STATUSES] } },
         select: {
@@ -50,8 +45,9 @@ async function getApartments(): Promise<Apartment[]> {
   return dbApartments.map((a) => {
     const availability = (a.availability ?? {}) as {
       season?: { from?: string; to?: string };
-      booked?: DateRangeISO[];
     };
+    const cover = a.images[0];
+    const photoCount = a.images.length;
 
     return {
       id: a.id,
@@ -61,16 +57,19 @@ async function getApartments(): Promise<Apartment[]> {
       address: a.address,
       pricePerNight: a.pricePerNight,
       guests: a.guests,
-      bedrooms: a.bedrooms,
+      bedrooms: 0,
       beds: a.beds,
-      bathrooms: a.bathrooms,
-      images: a.images,
-      description: a.description,
-      mapUrl: a.mapUrl,
-      amenities: a.amenities,
-      floor: a.floor ?? null,
-      totalFloors: a.totalFloors ?? null,
-      videoTourUrl: a.videoTourUrl ?? null,
+      bathrooms: 0,
+      images: cover ? [cover] : [],
+      photoCount,
+      description: "",
+      mapUrl: "",
+      amenities: [],
+      floor: null,
+      totalFloors: null,
+      videoTourUrl: null,
+      seaDistanceMin: a.seaDistanceMin,
+      seaDistanceMax: a.seaDistanceMax,
       availability: {
         season: {
           from: availability.season?.from || "",

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { ArrowLeft, Link as LinkIcon, X, Calendar, Plus } from "lucide-react";
+import { ArrowLeft, X, Calendar, Plus } from "lucide-react";
+import { ApartmentImagesField } from "@/components/admin/ApartmentImagesField";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 import { seasonMonthKeys } from "@/lib/monthlyPricing";
 
@@ -91,7 +92,6 @@ export default function EditApartmentForm({
   const [amenities, setAmenities] = useState<string[]>(
     apartment.amenities || [],
   );
-  const [imageUrlInput, setImageUrlInput] = useState("");
   const [monthlyOwnerPrices, setMonthlyOwnerPrices] = useState<
     Record<string, number>
   >(() => buildMonthlyMapsForEdit(apartment).owner);
@@ -284,19 +284,6 @@ export default function EditApartmentForm({
       setLoading(false);
     }
   }
-
-  // Додати посилання на фото
-  const addImageUrl = () => {
-    if (imageUrlInput.trim() && !images.includes(imageUrlInput.trim())) {
-      setImages([...images, imageUrlInput.trim()]);
-      setImageUrlInput("");
-    }
-  };
-
-  // Видалити посилання
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, idx) => idx !== index));
-  };
 
   // Додати новий період бронювання
   const addBookedPeriod = () => {
@@ -732,52 +719,7 @@ export default function EditApartmentForm({
           {/* Фото */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Фотографії</h2>
-
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={imageUrlInput}
-                  onChange={(e) => setImageUrlInput(e.target.value)}
-                  placeholder="Вставте посилання на фото (https://...)"
-                  className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={addImageUrl}
-                  disabled={!imageUrlInput.trim()}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <LinkIcon size={20} />
-                  Додати
-                </button>
-              </div>
-
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 gap-4 mt-4">
-                  {images.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={img}
-                        alt={`Фото ${i + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder.jpg";
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ApartmentImagesField images={images} onChange={setImages} />
           </div>
 
           {/* Доступність */}

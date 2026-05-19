@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Link as LinkIcon, X, Calendar, Plus } from "lucide-react";
+import { ArrowLeft, X, Calendar, Plus } from "lucide-react";
+import { ApartmentImagesField } from "@/components/admin/ApartmentImagesField";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 import { seasonMonthKeys } from "@/lib/monthlyPricing";
 
@@ -18,7 +19,6 @@ export default function NewApartmentPage() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [amenities, setAmenities] = useState<string[]>([]);
-  const [imageUrlInput, setImageUrlInput] = useState("");
   // Стан для заброньованих дат
   const [bookedPeriods, setBookedPeriods] = useState<BookedPeriod[]>([]);
   const [seaDistanceMin, setSeaDistanceMin] = useState<number>(5);
@@ -210,56 +210,6 @@ export default function NewApartmentPage() {
       setLoading(false);
     }
   }
-
-  // Додати посилання на фото
-  const addImageUrl = () => {
-    if (imageUrlInput.trim() && !images.includes(imageUrlInput.trim())) {
-      setImages([...images, imageUrlInput.trim()]);
-      setImageUrlInput("");
-    }
-  };
-
-  // Додати фото з комп'ютера (зберігаємо як base64 у images[])
-  const addImageFiles = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const maxSizeMb = 8;
-    const toDataUrl = (file: File) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(new Error("Не вдалося прочитати файл"));
-        reader.readAsDataURL(file);
-      });
-
-    try {
-      const prepared: string[] = [];
-      for (const file of files) {
-        if (!file.type.startsWith("image/")) continue;
-        if (file.size > maxSizeMb * 1024 * 1024) {
-          alert(`Файл ${file.name} більший за ${maxSizeMb}MB і пропущений`);
-          continue;
-        }
-        const dataUrl = await toDataUrl(file);
-        prepared.push(dataUrl);
-      }
-
-      if (prepared.length > 0) {
-        setImages((prev) => [...prev, ...prepared]);
-      }
-    } catch {
-      alert("Помилка читання файлу");
-    } finally {
-      // Дозволяє вибрати ті самі файли повторно
-      e.target.value = "";
-    }
-  };
-
-  // Видалити посилання
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, idx) => idx !== index));
-  };
 
   // Додати новий період бронювання
   const addBookedPeriod = () => {
@@ -686,80 +636,9 @@ export default function NewApartmentPage() {
             </div>
           </div>
 
-          {/* Фото - через посилання */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Фотографії</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Завантажити з комп'ютера
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={addImageFiles}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Фото зберігаються в БД у форматі base64 (до 8MB на файл).
-                </p>
-              </div>
-
-              {/* Поле для введення посилання */}
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={imageUrlInput}
-                  onChange={(e) => setImageUrlInput(e.target.value)}
-                  placeholder="Вставте посилання на фото (https://...)"
-                  className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={addImageUrl}
-                  disabled={!imageUrlInput.trim()}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <LinkIcon size={20} />
-                  Додати
-                </button>
-              </div>
-
-              {/* Прев'ю доданих фото */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 gap-4 mt-4">
-                  {images.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={img}
-                        alt={`Фото ${i + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                        onError={(e) => {
-                          // Якщо фото не завантажилось
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder.jpg";
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {images.length === 0 && (
-                <p className="text-gray-500 text-center py-8 border-2 border-dashed rounded-lg">
-                  Поки немає доданих фото. Вставте посилання вище.
-                </p>
-              )}
-            </div>
+            <ApartmentImagesField images={images} onChange={setImages} />
           </div>
 
           {/* Доступність та бронювання */}

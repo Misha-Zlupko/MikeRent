@@ -96,6 +96,10 @@ export async function POST(req: Request) {
         totalAmount: data.totalAmount ? Number(data.totalAmount) : null,
         ownerPayout: data.ownerPayout ? Number(data.ownerPayout) : null,
         ourProfit: data.ourProfit ? Number(data.ourProfit) : null,
+        prepaidToMe:
+          data.prepaidToMe != null ? Number(data.prepaidToMe) : null,
+        prepaidToOwner:
+          data.prepaidToOwner != null ? Number(data.prepaidToOwner) : null,
 
         // Додатково
         ownerPhone: data.ownerPhone,

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Home, Calendar, Users, PlusCircle, ClipboardList } from "lucide-react";
+import { BackupDataButton } from "@/components/admin/BackupDataButton";
 
 export default async function AdminDashboard() {
   const adminEmail =
@@ -207,6 +208,18 @@ export default async function AdminDashboard() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50/80 p-6">
+          <h2 className="mb-2 text-lg font-semibold text-emerald-900">
+            Захист даних бізнесу
+          </h2>
+          <p className="mb-4 max-w-2xl text-sm text-emerald-800">
+            Усі квартири, ціни, бронювання та заявки зберігаються в PostgreSQL
+            (Neon/Railway). Раз на тиждень завантажуйте копію на комп&apos;ютер —
+            тоді записи не зникнуть навіть при помилці або збої хостингу.
+          </p>
+          <BackupDataButton variant="primary" />
         </div>
 
         {/* Швидкі дії */}
