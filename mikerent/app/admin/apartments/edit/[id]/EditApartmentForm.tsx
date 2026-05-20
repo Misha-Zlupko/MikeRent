@@ -8,6 +8,7 @@ import { ArrowLeft, X, Calendar, Plus } from "lucide-react";
 import { ApartmentImagesField } from "@/components/admin/ApartmentImagesField";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 import { seasonMonthKeys } from "@/lib/monthlyPricing";
+import { getInvalidImageMessage } from "@/lib/validateApartmentImages";
 
 type BookedPeriod = {
   from: string;
@@ -210,6 +211,13 @@ export default function EditApartmentForm({
       floor > totalFloors
     ) {
       alert("Поверх квартири не може бути більшим за кількість поверхів у будинку");
+      setLoading(false);
+      return;
+    }
+
+    const invalidImages = getInvalidImageMessage(images);
+    if (invalidImages) {
+      alert(invalidImages);
       setLoading(false);
       return;
     }

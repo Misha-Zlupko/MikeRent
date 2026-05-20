@@ -7,6 +7,7 @@ import { ArrowLeft, X, Calendar, Plus } from "lucide-react";
 import { ApartmentImagesField } from "@/components/admin/ApartmentImagesField";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 import { seasonMonthKeys } from "@/lib/monthlyPricing";
+import { getInvalidImageMessage } from "@/lib/validateApartmentImages";
 
 // Тип для періоду бронювання
 type BookedPeriod = {
@@ -144,6 +145,13 @@ export default function NewApartmentPage() {
       return;
     }
 
+    const invalidImages = getInvalidImageMessage(images);
+    if (invalidImages) {
+      alert(invalidImages);
+      setLoading(false);
+      return;
+    }
+
     const data = {
       title: formData.get("title"),
       type: formData.get("type")?.toString().toUpperCase(),
@@ -200,12 +208,19 @@ export default function NewApartmentPage() {
 
         router.push("/admin/apartments");
         router.refresh();
+      } else if (res.status === 413) {
+        alert(
+          "Занадто багато даних (фото). Завантажте фото через кнопку «Обрати файли» з налаштованим Cloudinary або лише посилання https://, не вставляйте великі файли в JSON.",
+        );
       } else {
-        const error = await res.json();
-        alert(error.error || "Помилка створення");
+        const error = await res.json().catch(() => ({}));
+        alert(
+          (error as { error?: string }).error ||
+            `Помилка створення (код ${res.status})`,
+        );
       }
-    } catch (error) {
-      alert("Помилка сервера");
+    } catch {
+      alert("Помилка сервера — перевірте з’єднання");
     } finally {
       setLoading(false);
     }

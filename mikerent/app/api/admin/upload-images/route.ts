@@ -79,10 +79,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ url: cloudinaryUrl });
     }
 
-    const base64 = buffer.toString("base64");
-    const mime =
-      raw.type && raw.type.startsWith("image/") ? raw.type : "image/jpeg";
-    return NextResponse.json({ url: `data:${mime};base64,${base64}` });
+    return NextResponse.json(
+      {
+        error:
+          "Завантаження фото на сервер не налаштовано. Додайте на Railway змінні CLOUDINARY_CLOUD_NAME і CLOUDINARY_UPLOAD_PRESET (unsigned preset), або вставляйте посилання https:// на фото.",
+      },
+      { status: 503 },
+    );
   } catch (error) {
     console.error("upload-images:", error);
     return NextResponse.json(

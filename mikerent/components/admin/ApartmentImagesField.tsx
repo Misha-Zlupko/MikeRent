@@ -101,9 +101,16 @@ export function ApartmentImagesField({ images, onChange }: Props) {
           )}
         </button>
         <p className="mt-1 text-xs text-gray-500">
-          Можна виділити всі фото одразу. Кожне завантажується окремо (стиснення +
-          Cloudinary, якщо налаштовано).
+          Кожне фото завантажується окремо в Cloudinary. Без Cloudinary на Railway
+          квартира не збережеться — додайте змінні CLOUDINARY_CLOUD_NAME і
+          CLOUDINARY_UPLOAD_PRESET.
         </p>
+        {images.some((u) => u.startsWith("data:")) && (
+          <p className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+            Є фото, які не завантажились на сервер. Видаліть їх і завантажте знову
+            через кнопку вище або вставте посилання https://
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">

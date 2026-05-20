@@ -9,6 +9,10 @@ import {
 } from "@/lib/monthlyPricing";
 import { getAdminEmail } from "@/lib/adminAuth";
 import { writeAuditLog } from "@/lib/admin/audit";
+import {
+  filterPersistableImages,
+  getInvalidImageMessage,
+} from "@/lib/validateApartmentImages";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 const ALLOWED_CITIES = new Set(["Черноморск", "Санжейка"]);
@@ -185,6 +189,15 @@ export async function POST(req: Request) {
     const markup = markupVals.length ? Math.max(...markupVals) : 0;
     const pricePerNight = guestVals.length ? Math.max(...guestVals) : 0;
 
+    const rawImages: string[] = Array.isArray(data.images)
+      ? data.images.filter((x: unknown): x is string => typeof x === "string")
+      : [];
+    const invalidMsg = getInvalidImageMessage(rawImages);
+    if (invalidMsg) {
+      return NextResponse.json({ error: invalidMsg }, { status: 400 });
+    }
+    const images = filterPersistableImages(rawImages);
+
     const apartmentData = {
         title: data.title,
         type: data.type || "apartment",
@@ -203,7 +216,7 @@ export async function POST(req: Request) {
         beds: Number(data.beds) || Number(data.bedrooms) || 1,
         bathrooms: Number(data.bathrooms) || 1,
         description: data.description || "",
-        images: data.images || [],
+        images,
         amenities: data.amenities || [],
         mapUrl: data.mapUrl || "",
         floor,
