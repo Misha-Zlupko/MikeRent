@@ -9,6 +9,7 @@ import {
 } from "@/lib/monthlyPricing";
 import { getAdminEmail } from "@/lib/adminAuth";
 import { writeAuditLog } from "@/lib/admin/audit";
+import { normalizeCoverImageUrlForSave } from "@/lib/apartmentCoverImage";
 import {
   filterPersistableImages,
   getInvalidImageMessage,
@@ -197,6 +198,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: invalidMsg }, { status: 400 });
     }
     const images = filterPersistableImages(rawImages);
+    const coverImageUrl = normalizeCoverImageUrlForSave(
+      data.coverImageUrl,
+      images,
+    );
 
     const apartmentData = {
         title: data.title,
@@ -217,6 +222,7 @@ export async function POST(req: Request) {
         bathrooms: Number(data.bathrooms) || 1,
         description: data.description || "",
         images,
+        coverImageUrl,
         amenities: data.amenities || [],
         mapUrl: data.mapUrl || "",
         floor,

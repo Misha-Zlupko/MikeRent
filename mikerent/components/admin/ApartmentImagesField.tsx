@@ -1,15 +1,23 @@
 "use client";
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { Link as LinkIcon, Loader2, Upload, X } from "lucide-react";
+import { Home, Link as LinkIcon, Loader2, Upload, X } from "lucide-react";
 import { uploadApartmentImagesFromFiles } from "@/lib/uploadApartmentImages";
+import { isPersistableImageUrl } from "@/lib/validateApartmentImages";
 
 type Props = {
   images: string[];
   onChange: Dispatch<SetStateAction<string[]>>;
+  coverImageUrl: string | null;
+  onCoverChange: (url: string | null) => void;
 };
 
-export function ApartmentImagesField({ images, onChange }: Props) {
+export function ApartmentImagesField({
+  images,
+  onChange,
+  coverImageUrl,
+  onCoverChange,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -19,12 +27,21 @@ export function ApartmentImagesField({ images, onChange }: Props) {
     const url = imageUrlInput.trim();
     if (url && !images.includes(url)) {
       onChange([...images, url]);
+      if (!coverImageUrl && isPersistableImageUrl(url)) {
+        onCoverChange(url);
+      }
       setImageUrlInput("");
     }
   };
 
   const removeImage = (index: number) => {
-    onChange(images.filter((_, idx) => idx !== index));
+    const removed = images[index];
+    const next = images.filter((_, idx) => idx !== index);
+    onChange(next);
+    if (removed && coverImageUrl === removed) {
+      const fallback = next.find((u) => isPersistableImageUrl(u)) ?? null;
+      onCoverChange(fallback);
+    }
   };
 
   const handleFiles = async (fileList: FileList | null) => {
@@ -41,7 +58,13 @@ export function ApartmentImagesField({ images, onChange }: Props) {
       );
 
       if (urls.length > 0) {
-        onChange((prev) => [...prev, ...urls]);
+        onChange((prev) => {
+          const merged = [...prev, ...urls];
+          if (!coverImageUrl && urls[0]) {
+            onCoverChange(urls[0]);
+          }
+          return merged;
+        });
       }
 
       const parts: string[] = [];
@@ -69,6 +92,12 @@ export function ApartmentImagesField({ images, onChange }: Props) {
 
   return (
     <div className="space-y-4">
+      <p className="text-sm text-gray-600">
+        Натисніть <Home className="inline h-4 w-4 text-blue-600" /> на фото,
+        яке має бути на картці <strong>головної сторінки</strong>. На сторінці
+        квартири — усі фото як раніше.
+      </p>
+
       <div>
         <label className="mb-2 block text-sm font-medium">
           Завантажити з комп&apos;ютера
@@ -134,25 +163,53 @@ export function ApartmentImagesField({ images, onChange }: Props) {
 
       {images.length > 0 ? (
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {images.map((img, i) => (
-            <div key={`img-${i}`} className="group relative">
-              <img
-                src={img}
-                alt={`Фото ${i + 1}`}
-                className="h-24 w-full rounded object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder.jpg";
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(i)}
-                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition-opacity group-hover:opacity-100"
+          {images.map((img, i) => {
+            const isCover = coverImageUrl === img;
+            const canBeCover = isPersistableImageUrl(img);
+            return (
+              <div
+                key={`img-${i}-${img.slice(0, 32)}`}
+                className={`group relative rounded ring-2 ${
+                  isCover ? "ring-blue-500" : "ring-transparent"
+                }`}
               >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
+                <img
+                  src={img}
+                  alt={`Фото ${i + 1}`}
+                  className="h-24 w-full rounded object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.jpg";
+                  }}
+                />
+                {isCover && (
+                  <span className="absolute left-1 top-1 rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    Головна
+                  </span>
+                )}
+                {canBeCover && (
+                  <button
+                    type="button"
+                    title="Показати на головній сторінці"
+                    onClick={() => onCoverChange(img)}
+                    className={`absolute bottom-1 left-1 flex h-7 w-7 items-center justify-center rounded-full shadow ${
+                      isCover
+                        ? "bg-blue-600 text-white"
+                        : "bg-white/90 text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+                    }`}
+                  >
+                    <Home size={14} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className="rounded-lg border-2 border-dashed py-8 text-center text-gray-500">

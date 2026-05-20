@@ -1,10 +1,7 @@
 import type { Apartment, ApartmentType, DateRangeISO } from "@/data/ApartmentsTypes";
 import { bookingRangeToCalendarIso } from "@/lib/bookingCalendarDates";
 import { resolveGuestMonthlyPrices } from "@/lib/monthlyPricing";
-import { filterPersistableImages } from "@/lib/validateApartmentImages";
-
-/** Скільки фото в слайдері на головній — менше = менший ISR fallback на Vercel */
-const MAX_HOME_IMAGES = 4;
+import { homeCardImages } from "@/lib/apartmentCoverImage";
 
 type DbApartmentRow = {
   id: string;
@@ -16,6 +13,7 @@ type DbApartmentRow = {
   guests: number;
   beds: number;
   images: string[];
+  coverImageUrl: string | null;
   seaDistanceMin: number | null;
   seaDistanceMax: number | null;
   availability: unknown;
@@ -39,7 +37,7 @@ export function toHomeApartmentPayload(a: DbApartmentRow): Apartment {
     bedrooms: 0,
     beds: a.beds,
     bathrooms: 0,
-    images: filterPersistableImages(a.images).slice(0, MAX_HOME_IMAGES),
+    images: homeCardImages(a.coverImageUrl, a.images),
     description: "",
     mapUrl: "",
     amenities: [],

@@ -51,6 +51,7 @@ export function buildDuplicatedApartmentData(source: Apartment, targetYear?: num
     beds: source.beds,
     bathrooms: source.bathrooms,
     images: [...source.images],
+    coverImageUrl: source.coverImageUrl,
     description: source.description,
     mapUrl: source.mapUrl,
     amenities: [...source.amenities],

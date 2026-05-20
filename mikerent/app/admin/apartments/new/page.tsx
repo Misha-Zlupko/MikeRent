@@ -20,6 +20,7 @@ export default function NewApartmentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [externalOccupancy, setExternalOccupancy] = useState<
     ExternalOccupancyPeriod[]
@@ -175,6 +176,7 @@ export default function NewApartmentPage() {
       bathrooms: Number(formData.get("bathrooms")),
       description: formData.get("description"),
       images: images,
+      coverImageUrl,
       amenities: amenities,
       mapUrl: formData.get("mapUrl"),
 
@@ -661,7 +663,12 @@ export default function NewApartmentPage() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Фотографії</h2>
-            <ApartmentImagesField images={images} onChange={setImages} />
+            <ApartmentImagesField
+              images={images}
+              onChange={setImages}
+              coverImageUrl={coverImageUrl}
+              onCoverChange={setCoverImageUrl}
+            />
           </div>
 
           {/* Доступність та бронювання */}

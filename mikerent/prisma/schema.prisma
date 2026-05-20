@@ -57,6 +57,8 @@ model Apartment {
   bathrooms     Int
 
   images        String[]
+  /// Фото на картці головної сторінки (одне з images)
+  coverImageUrl String?
   description   String
   mapUrl        String
   amenities     String[]

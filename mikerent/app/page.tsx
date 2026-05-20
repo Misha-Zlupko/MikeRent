@@ -29,6 +29,7 @@ async function getApartments(): Promise<Apartment[]> {
       guests: true,
       beds: true,
       images: true,
+      coverImageUrl: true,
       seaDistanceMin: true,
       seaDistanceMax: true,
       availability: true,

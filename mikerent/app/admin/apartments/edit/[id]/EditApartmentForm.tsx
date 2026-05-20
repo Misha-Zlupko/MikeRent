@@ -9,6 +9,7 @@ import { ApartmentImagesField } from "@/components/admin/ApartmentImagesField";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 import { seasonMonthKeys } from "@/lib/monthlyPricing";
 import { getInvalidImageMessage } from "@/lib/validateApartmentImages";
+import { resolveCoverImageUrl } from "@/lib/apartmentCoverImage";
 import { BOOKING_RECORD_TYPE_LABELS } from "@/lib/bookingRecordType";
 
 type ExternalOccupancyPeriod = {
@@ -31,6 +32,7 @@ type ApartmentData = {
   bathrooms: number;
   description: string;
   images: string[];
+  coverImageUrl?: string | null;
   amenities: string[];
   mapUrl: string;
   ownerName?: string | null;
@@ -92,6 +94,11 @@ export default function EditApartmentForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>(apartment.images || []);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(
+    () =>
+      resolveCoverImageUrl(apartment.coverImageUrl, apartment.images || []) ??
+      null,
+  );
   const [amenities, setAmenities] = useState<string[]>(
     apartment.amenities || [],
   );
@@ -244,6 +251,7 @@ export default function EditApartmentForm({
       bathrooms: Number(formData.get("bathrooms")),
       description: formData.get("description"),
       images: images,
+      coverImageUrl,
       amenities: amenities,
       mapUrl: formData.get("mapUrl"),
       seasonFrom: seasonFrom ? new Date(seasonFrom) : null,
@@ -730,7 +738,12 @@ export default function EditApartmentForm({
           {/* Фото */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Фотографії</h2>
-            <ApartmentImagesField images={images} onChange={setImages} />
+            <ApartmentImagesField
+              images={images}
+              onChange={setImages}
+              coverImageUrl={coverImageUrl}
+              onCoverChange={setCoverImageUrl}
+            />
           </div>
 
           {/* Доступність */}
