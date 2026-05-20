@@ -42,7 +42,10 @@ export async function findPastBookingsByPhone(
   if (digits.length < 9) return [];
 
   const bookings = await prisma.booking.findMany({
-    where: excludeBookingId ? { NOT: { id: excludeBookingId } } : undefined,
+    where: {
+      recordType: "AGENCY",
+      ...(excludeBookingId ? { NOT: { id: excludeBookingId } } : {}),
+    },
     include: { apartment: { select: { title: true, city: true } } },
     orderBy: { dateFrom: "desc" },
     take: 200,

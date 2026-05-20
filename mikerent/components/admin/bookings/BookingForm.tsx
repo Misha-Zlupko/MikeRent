@@ -10,13 +10,16 @@ import MessageTemplatesCard from "@/components/admin/MessageTemplatesCard";
 import FinancialSection from "./FinancialSection";
 import FormActions from "./FormActions";
 import { ClipboardList } from "lucide-react";
-import type { PaymentStatus } from "@prisma/client";
+import type { BookingRecordType, PaymentStatus } from "@prisma/client";
 import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import {
   BOOKING_AMOUNT_UAH_FACTOR,
   bookingStoredToUah,
   uahToBookingStored,
 } from "@/lib/bookingAmounts";
+import { bookingRangeToCalendarIso } from "@/lib/bookingCalendarDates";
+import BookingRecordTypeSelect from "./BookingRecordTypeSelect";
+import { isAgencyBooking } from "@/lib/bookingRecordType";
 
 export type InitialBookingValues = {
   apartment: {
@@ -39,6 +42,7 @@ export type InitialBookingValues = {
   prepaidToOwner: number | null;
   paymentStatus?: PaymentStatus;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
+  recordType?: BookingRecordType;
 };
 
 type BookingFormProps = {
@@ -84,6 +88,7 @@ export default function BookingForm({
   const [paymentStatus, setPaymentStatus] =
     useState<PaymentStatus>("UNPAID");
   const [guestNotes, setGuestNotes] = useState("");
+  const [recordType, setRecordType] = useState<BookingRecordType>("AGENCY");
 
   // Фінансові показники в гривнях
   const [ownerPricePerNight, setOwnerPricePerNight] = useState(0); // грн/ніч
@@ -120,8 +125,9 @@ export default function BookingForm({
 
     const from = new Date(initialBooking.dateFrom);
     const to = new Date(initialBooking.dateTo);
-    setDateFrom(from.toISOString().slice(0, 10));
-    setDateTo(to.toISOString().slice(0, 10));
+    const { from: fromIso, to: toIso } = bookingRangeToCalendarIso(from, to);
+    setDateFrom(fromIso);
+    setDateTo(toIso);
 
     setGuestName(initialBooking.guestName ?? "");
     setGuestPhone(initialBooking.guestPhone ?? "");
@@ -151,7 +157,10 @@ export default function BookingForm({
       roundMoney2(bookingStoredToUah(initialBooking.prepaidToOwner) ?? 0),
     );
     setPaymentStatus(initialBooking.paymentStatus ?? "UNPAID");
+    setRecordType(initialBooking.recordType ?? "AGENCY");
   }, [initialBooking]);
+
+  const isClientBooking = isAgencyBooking(recordType);
 
   const { remainingToPay } = calcPrepaymentTotals({
     clientTotal,
@@ -185,11 +194,14 @@ export default function BookingForm({
       guestNotes,
       ownerPhone,
       status,
+      recordType,
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <BookingRecordTypeSelect value={recordType} onChange={setRecordType} />
+
       <ApartmentSelector
         selectedApartment={selectedApartment}
         onSelect={setSelectedApartment}
@@ -203,41 +215,45 @@ export default function BookingForm({
         nights={nights}
       />
 
-      <GuestInfo
-        guestName={guestName}
-        guestPhone={guestPhone}
-        guestCount={guestCount}
-        guestContact={guestContact}
-        onGuestNameChange={setGuestName}
-        onGuestPhoneChange={setGuestPhone}
-        onGuestCountChange={setGuestCount}
-        onGuestContactChange={setGuestContact}
-      />
+      {isClientBooking && (
+        <>
+          <GuestInfo
+            guestName={guestName}
+            guestPhone={guestPhone}
+            guestCount={guestCount}
+            guestContact={guestContact}
+            onGuestNameChange={setGuestName}
+            onGuestPhoneChange={setGuestPhone}
+            onGuestCountChange={setGuestCount}
+            onGuestContactChange={setGuestContact}
+          />
 
-      <GuestHistoryPanel
-        guestPhone={guestPhone}
-        guestName={guestName}
-        guestNotes={guestNotes}
-        onGuestNotesChange={setGuestNotes}
-        excludeBookingId={bookingId}
-      />
+          <GuestHistoryPanel
+            guestPhone={guestPhone}
+            guestName={guestName}
+            guestNotes={guestNotes}
+            onGuestNotesChange={setGuestNotes}
+            excludeBookingId={bookingId}
+          />
 
-      <PaymentStatusSelect
-        value={paymentStatus}
-        onChange={setPaymentStatus}
-      />
+          <PaymentStatusSelect
+            value={paymentStatus}
+            onChange={setPaymentStatus}
+          />
 
-      <MessageTemplatesCard
-        vars={{
-          guestName,
-          apartmentTitle: selectedApartment?.title,
-          dateFrom,
-          dateTo,
-          total: clientTotal,
-          remaining: remainingToPay,
-          address: selectedApartment?.city,
-        }}
-      />
+          <MessageTemplatesCard
+            vars={{
+              guestName,
+              apartmentTitle: selectedApartment?.title,
+              dateFrom,
+              dateTo,
+              total: clientTotal,
+              remaining: remainingToPay,
+              address: selectedApartment?.city,
+            }}
+          />
+        </>
+      )}
 
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -273,21 +289,23 @@ export default function BookingForm({
         )}
       </div>
 
-      <FinancialSection
-        selectedApartment={selectedApartment}
-        nights={nights}
-        ownerPricePerNight={ownerPricePerNight}
-        markupPerNight={markupPerNight}
-        prepaidToMe={prepaidToMe}
-        prepaidToOwner={prepaidToOwner}
-        onOwnerPriceChange={setOwnerPricePerNight}
-        onMarkupChange={setMarkupPerNight}
-        onPrepaidToMeChange={setPrepaidToMe}
-        onPrepaidToOwnerChange={setPrepaidToOwner}
-        ownerTotalPrice={ownerTotalPrice}
-        clientTotal={clientTotal}
-        ourProfit={ourProfit}
-      />
+      {isClientBooking && (
+        <FinancialSection
+          selectedApartment={selectedApartment}
+          nights={nights}
+          ownerPricePerNight={ownerPricePerNight}
+          markupPerNight={markupPerNight}
+          prepaidToMe={prepaidToMe}
+          prepaidToOwner={prepaidToOwner}
+          onOwnerPriceChange={setOwnerPricePerNight}
+          onMarkupChange={setMarkupPerNight}
+          onPrepaidToMeChange={setPrepaidToMe}
+          onPrepaidToOwnerChange={setPrepaidToOwner}
+          ownerTotalPrice={ownerTotalPrice}
+          clientTotal={clientTotal}
+          ourProfit={ourProfit}
+        />
+      )}
 
       <FormActions loading={loading} submitLabel={submitLabel} />
     </form>

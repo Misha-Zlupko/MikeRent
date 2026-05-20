@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyAdmin } from "@/lib/adminAuth";
 import { buildApartmentsCsv, buildBookingsCsv } from "@/lib/admin/exportCsv";
 import { normalizeGuestPhone } from "@/lib/phone";
+import { agencyBookingWhere } from "@/lib/bookingRecordType";
 
 export async function GET(req: Request) {
   if (!(await verifyAdmin())) {
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
 
     const bookings = await prisma.booking.findMany({
       where: {
+        ...agencyBookingWhere,
         dateFrom: { lte: rangeEnd },
         dateTo: { gte: rangeStart },
       },

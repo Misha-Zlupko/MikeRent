@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { bookingStoredToUah } from "@/lib/bookingAmounts";
 import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { agencyBookingWhere } from "@/lib/bookingRecordType";
 
 export type AdminReminder = {
   id: string;
@@ -33,6 +34,7 @@ export async function getAdminReminders(): Promise<AdminReminder[]> {
   const [checkins, apartments, unpaidCandidates] = await Promise.all([
     prisma.booking.findMany({
       where: {
+        ...agencyBookingWhere,
         dateFrom: { gte: tomorrow, lt: dayAfter },
         status: { in: ["CONFIRMED", "PENDING"] },
       },
@@ -49,6 +51,7 @@ export async function getAdminReminders(): Promise<AdminReminder[]> {
     }),
     prisma.booking.findMany({
       where: {
+        ...agencyBookingWhere,
         dateFrom: { gte: today },
         status: { in: ["CONFIRMED", "PENDING"] },
         OR: [

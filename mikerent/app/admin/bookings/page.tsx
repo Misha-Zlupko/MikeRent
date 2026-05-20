@@ -8,11 +8,13 @@ import BookingsListClient, {
 } from "@/components/admin/bookings/BookingsListClient";
 import ExportTools from "@/components/admin/ExportTools";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { agencyBookingWhere } from "@/lib/bookingRecordType";
 import { getAdminSession } from "@/lib/adminAuth";
 import { canDeleteBookings } from "@/lib/adminPermissions";
 
 async function getBookings() {
   return prisma.booking.findMany({
+    where: agencyBookingWhere,
     include: {
       apartment: true,
     },
@@ -84,6 +86,10 @@ export default async function BookingsPage() {
                 Керування бронюваннями
               </h1>
               <p className="text-sm text-gray-500 mt-1">
+                Лише ваші клієнти. Зайнятість хазяїна / іншого рієлтора — у
+                картці квартири.
+              </p>
+              <p className="text-sm text-gray-400 mt-0.5">
                 {new Date().toLocaleDateString("uk-UA", {
                   weekday: "long",
                   year: "numeric",

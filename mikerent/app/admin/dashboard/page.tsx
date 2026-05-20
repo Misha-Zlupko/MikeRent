@@ -16,6 +16,7 @@ import ManageWorkersCard from "@/components/admin/dashboard/ManageWorkersCard";
 import WorkerActivityPanel from "@/components/admin/dashboard/WorkerActivityPanel";
 import PaymentOverviewPanel from "@/components/admin/dashboard/PaymentOverviewPanel";
 import { getPaymentOverview } from "@/lib/admin/paymentOverview";
+import { agencyBookingWhere } from "@/lib/bookingRecordType";
 
 export default async function AdminDashboard() {
   const seasonYear = new Date().getFullYear();
@@ -46,7 +47,7 @@ export default async function AdminDashboard() {
     paymentOverview,
   ] = await Promise.all([
     prisma.apartment.count(),
-    prisma.booking.count(),
+    prisma.booking.count({ where: agencyBookingWhere }),
     prismaAny.bookingRequest.count({
       where: {
         status: {
@@ -56,6 +57,7 @@ export default async function AdminDashboard() {
     }),
     prisma.activeUser.count({ where: { lastActivity: { gte: activeCutoff } } }),
     prisma.booking.findMany({
+      where: agencyBookingWhere,
       take: 5,
       orderBy: { createdAt: "desc" },
       include: { apartment: true },

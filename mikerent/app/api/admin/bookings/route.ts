@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { BookingStatus, PaymentStatus } from "@prisma/client";
+import type { BookingRecordType, BookingStatus, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -7,6 +7,10 @@ import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
 import { getAdminEmail, requireOwner } from "@/lib/adminAuth";
 import { writeAuditLog } from "@/lib/admin/audit";
 import { upsertGuestFromBooking } from "@/lib/admin/guest";
+import {
+  isAgencyBooking,
+  parseBookingRecordType,
+} from "@/lib/bookingRecordType";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -65,6 +69,8 @@ export async function POST(req: Request) {
     const dateFrom = withUtcHour(data.dateFrom, 14);
     const dateTo = withUtcHour(data.dateTo, 12);
     const status = (data.status as string) || "CONFIRMED";
+    const recordType =
+      parseBookingRecordType(data.recordType) ?? ("AGENCY" as BookingRecordType);
 
     if (status === "CONFIRMED" || status === "PENDING") {
       const overlaps = await hasOverlappingActiveBooking({
@@ -108,22 +114,31 @@ export async function POST(req: Request) {
         // Додатково
         ownerPhone: data.ownerPhone,
         status: status as BookingStatus,
+        recordType,
       },
     });
 
-    await upsertGuestFromBooking({
-      guestPhone: data.guestPhone,
-      guestName: data.guestName,
-      guestNotes: data.guestNotes,
-    });
+    if (isAgencyBooking(recordType)) {
+      await upsertGuestFromBooking({
+        guestPhone: data.guestPhone,
+        guestName: data.guestName,
+        guestNotes: data.guestNotes,
+      });
+    }
 
     const adminEmail = (await getAdminEmail()) ?? "admin";
+    const typeLabel =
+      recordType === "OWNER"
+        ? "хазяїн"
+        : recordType === "EXTERNAL"
+          ? "інший рієлтор"
+          : data.guestName || "гість";
     await writeAuditLog({
       adminEmail,
       entityType: "booking",
       entityId: booking.id,
       action: "create",
-      summary: `Нова бронь: ${data.guestName || "гість"}`,
+      summary: `Нова бронь (${recordType}): ${typeLabel}`,
     });
 
     return NextResponse.json(booking, { status: 201 });
@@ -145,6 +160,7 @@ export async function DELETE(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const apartmentId = searchParams.get("apartmentId");
+  const externalOnly = searchParams.get("externalOnly") === "true";
 
   if (!apartmentId) {
     return NextResponse.json(
@@ -155,7 +171,12 @@ export async function DELETE(req: Request) {
 
   try {
     await prisma.booking.deleteMany({
-      where: { apartmentId },
+      where: {
+        apartmentId,
+        ...(externalOnly
+          ? { recordType: { in: ["OWNER", "EXTERNAL"] } }
+          : {}),
+      },
     });
     return NextResponse.json({ success: true });
   } catch (error) {

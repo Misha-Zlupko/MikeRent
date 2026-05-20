@@ -99,6 +99,7 @@ model Booking {
   prepaidToOwner Float? // передоплата, яку отримав хазяїн (у форматі БД /42)
   paymentStatus  PaymentStatus @default(UNPAID)
   ownerPhone  String?   // номер хазяїна для зв'язку
+  recordType    BookingRecordType @default(AGENCY)
 
   // Службова інформація
   createdAt   DateTime  @default(now())
@@ -150,6 +151,13 @@ enum PaymentStatus {
   PREPAID_RECEIVED
   BALANCE_AT_CHECKIN
   PAID_IN_FULL
+}
+
+/// AGENCY — ваші клієнти (список бронювань); OWNER / EXTERNAL — лише зайнятість на картці квартири
+enum BookingRecordType {
+  AGENCY
+  OWNER
+  EXTERNAL
 }
 
 enum BookingRequestStatus {

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import type { BookingStatus, PaymentStatus } from "@prisma/client";
+import type {
+  BookingRecordType,
+  BookingStatus,
+  PaymentStatus,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -7,6 +11,10 @@ import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
 import { getAdminEmail, getAdminSession, requireOwner } from "@/lib/adminAuth";
 import { summarizeBookingChanges, writeAuditLog } from "@/lib/admin/audit";
 import { upsertGuestFromBooking } from "@/lib/admin/guest";
+import {
+  isAgencyBooking,
+  parseBookingRecordType,
+} from "@/lib/bookingRecordType";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -200,6 +208,8 @@ export async function PUT(
     }
 
     const paymentStatus = (data.paymentStatus as PaymentStatus) || existing.paymentStatus;
+    const recordType =
+      parseBookingRecordType(data.recordType) ?? existing.recordType;
 
     const booking = await prisma.booking.update({
       where: { id },
@@ -207,6 +217,7 @@ export async function PUT(
         apartmentId,
         dateFrom,
         dateTo,
+        recordType,
         guestName: data.guestName || null,
         guestPhone: data.guestPhone || null,
         guestCount: data.guestCount ? Number(data.guestCount) : null,
@@ -225,11 +236,13 @@ export async function PUT(
       include: { apartment: true },
     });
 
-    await upsertGuestFromBooking({
-      guestPhone: data.guestPhone,
-      guestName: data.guestName,
-      guestNotes: data.guestNotes,
-    });
+    if (isAgencyBooking(recordType)) {
+      await upsertGuestFromBooking({
+        guestPhone: data.guestPhone,
+        guestName: data.guestName,
+        guestNotes: data.guestNotes,
+      });
+    }
 
     const changeSummary = summarizeBookingChanges(
       {

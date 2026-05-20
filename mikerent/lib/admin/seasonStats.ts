@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { bookingStoredToUah } from "@/lib/bookingAmounts";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { agencyBookingWhere } from "@/lib/bookingRecordType";
 
 export type SeasonMonthStat = {
   month: number;
@@ -47,6 +48,7 @@ export async function getSeasonDashboardStats(year: number) {
 
   const bookings = await prisma.booking.findMany({
     where: {
+      ...agencyBookingWhere,
       dateFrom: { lte: rangeEnd },
       dateTo: { gte: rangeStart },
     },

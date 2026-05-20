@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getBookingPaymentInfo } from "@/lib/bookingPaymentDisplay";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { agencyBookingWhere } from "@/lib/bookingRecordType";
 
 export type PaymentOverviewRow = {
   id: string;
@@ -23,7 +24,10 @@ export async function getPaymentOverview(): Promise<{
 }> {
   const now = new Date();
   const bookings = await prisma.booking.findMany({
-    where: { status: { in: ["CONFIRMED", "PENDING"] } },
+    where: {
+      ...agencyBookingWhere,
+      status: { in: ["CONFIRMED", "PENDING"] },
+    },
     include: { apartment: { select: { title: true } } },
     orderBy: { dateFrom: "asc" },
   });

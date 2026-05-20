@@ -7,6 +7,8 @@ import {
   extractMonthlyPrices,
 } from "@/lib/monthlyPricing";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { bookingRangeToCalendarIso } from "@/lib/bookingCalendarDates";
+import { isExternalOccupancy } from "@/lib/bookingRecordType";
 
 interface PageProps {
   params: Promise<{
@@ -40,11 +42,14 @@ export default async function EditApartmentPage({ params }: PageProps) {
     monthlyOwnerPrices: extractMonthlyOwnerPrices(apartment.availability),
     monthlyMarkups: extractMonthlyMarkups(apartment.availability),
     monthlyPrices: extractMonthlyPrices(apartment.availability),
-    bookings: apartment.bookings
-      .filter((b) => isActiveBookingStatus(b.status))
+    externalOccupancy: apartment.bookings
+      .filter(
+        (b) =>
+          isActiveBookingStatus(b.status) && isExternalOccupancy(b.recordType),
+      )
       .map((b) => ({
-        from: b.dateFrom.toISOString().slice(0, 10),
-        to: b.dateTo.toISOString().slice(0, 10),
+        ...bookingRangeToCalendarIso(b.dateFrom, b.dateTo),
+        recordType: b.recordType as "OWNER" | "EXTERNAL",
       })),
   };
   return <EditApartmentForm apartment={apartmentWithStrings} />;

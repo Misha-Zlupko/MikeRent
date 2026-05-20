@@ -8,11 +8,12 @@ import { ApartmentImagesField } from "@/components/admin/ApartmentImagesField";
 import { isValidUkrainianPhone, normalizePhone } from "@/lib/phone";
 import { seasonMonthKeys } from "@/lib/monthlyPricing";
 import { getInvalidImageMessage } from "@/lib/validateApartmentImages";
+import { BOOKING_RECORD_TYPE_LABELS } from "@/lib/bookingRecordType";
 
-// Тип для періоду бронювання
-type BookedPeriod = {
+type ExternalOccupancyPeriod = {
   from: string;
   to: string;
+  recordType: "OWNER" | "EXTERNAL";
 };
 
 export default function NewApartmentPage() {
@@ -20,8 +21,9 @@ export default function NewApartmentPage() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [amenities, setAmenities] = useState<string[]>([]);
-  // Стан для заброньованих дат
-  const [bookedPeriods, setBookedPeriods] = useState<BookedPeriod[]>([]);
+  const [externalOccupancy, setExternalOccupancy] = useState<
+    ExternalOccupancyPeriod[]
+  >([]);
   const [seaDistanceMin, setSeaDistanceMin] = useState<number>(5);
   const [seaDistanceMax, setSeaDistanceMax] = useState<number>(7);
 
@@ -191,8 +193,7 @@ export default function NewApartmentPage() {
       if (res.ok) {
         const apartment = await res.json();
 
-        // Створюємо бронювання для кожного періоду
-        for (const period of bookedPeriods) {
+        for (const period of externalOccupancy) {
           if (period.from && period.to) {
             await fetch("/api/admin/bookings", {
               method: "POST",
@@ -201,6 +202,8 @@ export default function NewApartmentPage() {
                 apartmentId: apartment.id,
                 dateFrom: period.from,
                 dateTo: period.to,
+                recordType: period.recordType,
+                status: "CONFIRMED",
               }),
             });
           }
@@ -227,24 +230,29 @@ export default function NewApartmentPage() {
   }
 
   // Додати новий період бронювання
-  const addBookedPeriod = () => {
-    setBookedPeriods([...bookedPeriods, { from: "", to: "" }]);
+  const addExternalPeriod = () => {
+    setExternalOccupancy([
+      ...externalOccupancy,
+      { from: "", to: "", recordType: "OWNER" },
+    ]);
   };
 
-  // Оновити період бронювання
-  const updateBookedPeriod = (
+  const updateExternalPeriod = (
     index: number,
-    field: "from" | "to",
+    field: "from" | "to" | "recordType",
     value: string,
   ) => {
-    const updated = [...bookedPeriods];
-    updated[index][field] = value;
-    setBookedPeriods(updated);
+    const updated = [...externalOccupancy];
+    if (field === "recordType") {
+      updated[index].recordType = value as "OWNER" | "EXTERNAL";
+    } else {
+      updated[index][field] = value;
+    }
+    setExternalOccupancy(updated);
   };
 
-  // Видалити період бронювання
-  const removeBookedPeriod = (index: number) => {
-    setBookedPeriods(bookedPeriods.filter((_, i) => i !== index));
+  const removeExternalPeriod = (index: number) => {
+    setExternalOccupancy(externalOccupancy.filter((_, i) => i !== index));
   };
 
   const monthNames: Record<string, string> = {
@@ -694,54 +702,73 @@ export default function NewApartmentPage() {
               </div>
             </div>
 
-            {/* Заброньовані дати */}
+            {/* Зайнятість не вашими клієнтами */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium">Заброньовані дати</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium">Зайнятість (не мої клієнти)</h3>
                 <button
                   type="button"
-                  onClick={addBookedPeriod}
+                  onClick={addExternalPeriod}
                   className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm"
                 >
                   <Plus size={16} />
                   Додати період
                 </button>
               </div>
+              <p className="text-xs text-gray-500 mb-3">
+                Хазяїн або інший рієлтор. Дати на сайті закриті, у «Бронюваннях»
+                не з’являться.
+              </p>
 
-              {bookedPeriods.length === 0 ? (
+              {externalOccupancy.length === 0 ? (
                 <p className="text-gray-500 text-center py-4 border border-dashed rounded">
-                  Немає заброньованих дат. Додайте періоди, коли квартира
-                  зайнята.
+                  Немає записів зайнятості
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {bookedPeriods.map((period, index) => (
+                  {externalOccupancy.map((period, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 bg-gray-50 p-3 rounded"
+                      className="flex flex-wrap items-center gap-2 bg-amber-50/80 border border-amber-100 p-3 rounded"
                     >
+                      <select
+                        value={period.recordType}
+                        onChange={(e) =>
+                          updateExternalPeriod(
+                            index,
+                            "recordType",
+                            e.target.value,
+                          )
+                        }
+                        className="p-2 border rounded text-sm min-w-[140px]"
+                      >
+                        <option value="OWNER">
+                          {BOOKING_RECORD_TYPE_LABELS.OWNER}
+                        </option>
+                        <option value="EXTERNAL">
+                          {BOOKING_RECORD_TYPE_LABELS.EXTERNAL}
+                        </option>
+                      </select>
                       <input
                         type="date"
                         value={period.from}
                         onChange={(e) =>
-                          updateBookedPeriod(index, "from", e.target.value)
+                          updateExternalPeriod(index, "from", e.target.value)
                         }
-                        className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                        placeholder="Початок"
+                        className="flex-1 min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-blue-500"
                       />
                       <span className="text-gray-500">—</span>
                       <input
                         type="date"
                         value={period.to}
                         onChange={(e) =>
-                          updateBookedPeriod(index, "to", e.target.value)
+                          updateExternalPeriod(index, "to", e.target.value)
                         }
-                        className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                        placeholder="Кінець"
+                        className="flex-1 min-w-[120px] p-2 border rounded focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         type="button"
-                        onClick={() => removeBookedPeriod(index)}
+                        onClick={() => removeExternalPeriod(index)}
                         className="text-red-600 hover:text-red-700 p-2"
                       >
                         <X size={18} />

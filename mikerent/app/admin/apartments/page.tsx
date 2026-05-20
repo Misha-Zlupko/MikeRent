@@ -10,6 +10,8 @@ import ExportTools from "@/components/admin/ExportTools";
 import DuplicateApartmentButton from "@/components/admin/DuplicateApartmentButton";
 import { getAdminSession, isOwner } from "@/lib/adminAuth";
 import { canDeleteApartments } from "@/lib/adminPermissions";
+import { isActiveBookingStatus } from "@/lib/bookingStatus";
+import { isExternalOccupancy } from "@/lib/bookingRecordType";
 
 async function getApartments() {
   const apartments = await prisma.apartment.findMany({
@@ -48,8 +50,17 @@ export default async function ApartmentsPage() {
     rows.map((apt) => {
       const today = new Date();
       const isBookedToday = apt.bookings?.some(
-        (b) => b.dateFrom <= today && b.dateTo >= today,
+        (b) =>
+          isActiveBookingStatus(b.status) &&
+          b.dateFrom <= today &&
+          b.dateTo >= today,
       );
+      const externalCount =
+        apt.bookings?.filter(
+          (b) =>
+            isActiveBookingStatus(b.status) &&
+            isExternalOccupancy(b.recordType),
+        ).length ?? 0;
       const category = (apt as typeof apt & { category?: string }).category;
       const categoryLabel =
         category === "SHARED"
@@ -80,6 +91,11 @@ export default async function ApartmentsPage() {
           <td className="p-4">
             <div className="font-medium text-gray-900">{apt.title}</div>
             <div className="text-sm text-gray-500">{apt.address}</div>
+            {externalCount > 0 && (
+              <span className="inline-block mt-1 text-xs rounded-full bg-amber-100 text-amber-800 px-2 py-0.5">
+                Чужа зайнятість: {externalCount}
+              </span>
+            )}
           </td>
           <td className="p-4 text-gray-600">{apt.city}</td>
           <td className="p-4">

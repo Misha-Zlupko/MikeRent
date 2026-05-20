@@ -25,6 +25,7 @@ type BookingApi = {
   prepaidToOwner: number | null;
   paymentStatus?: "UNPAID" | "PREPAID_RECEIVED" | "BALANCE_AT_CHECKIN" | "PAID_IN_FULL";
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REJECTED";
+  recordType?: "AGENCY" | "OWNER" | "EXTERNAL";
   apartment: {
     id: string;
     title: string;
@@ -105,6 +106,7 @@ export default function EditBookingPage() {
       prepaidToOwner: booking.prepaidToOwner,
       paymentStatus: booking.paymentStatus,
       status: booking.status,
+      recordType: booking.recordType ?? "AGENCY",
     };
   }, [booking]);
 
