@@ -13,6 +13,56 @@ export function getMonthKey(date: Date): string {
   return `${year}-${month}`;
 }
 
+const MONTH_LABELS_UK: Record<string, string> = {
+  "01": "Січень",
+  "02": "Лютий",
+  "03": "Березень",
+  "04": "Квітень",
+  "05": "Травень",
+  "06": "Червень",
+  "07": "Липень",
+  "08": "Серпень",
+  "09": "Вересень",
+  "10": "Жовтень",
+  "11": "Листопад",
+  "12": "Грудень",
+};
+
+export function formatMonthKeyLabel(monthKey: string): string {
+  const [year, month] = monthKey.split("-");
+  const name = MONTH_LABELS_UK[month] ?? month;
+  return `${name} ${year}`;
+}
+
+export type MonthlyPriceRow = {
+  monthKey: string;
+  label: string;
+  pricePerNight: number;
+};
+
+/** Усі місяці з ціною для гостя, відсортовані хронологічно. */
+export function getGuestMonthlyPriceRows(
+  monthlyPrices: MonthlyPrices,
+): MonthlyPriceRow[] {
+  return Object.entries(monthlyPrices)
+    .filter(([, price]) => price > 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([monthKey, pricePerNight]) => ({
+      monthKey,
+      label: formatMonthKeyLabel(monthKey),
+      pricePerNight,
+    }));
+}
+
+export function getMonthlyPriceRange(monthlyPrices: MonthlyPrices): {
+  min: number;
+  max: number;
+} | null {
+  const values = Object.values(monthlyPrices).filter((p) => p > 0);
+  if (values.length === 0) return null;
+  return { min: Math.min(...values), max: Math.max(...values) };
+}
+
 /** Ціна за ніч для конкретної дати (місячна ціна = ціна за ніч у цьому місяці). */
 export function getNightlyPriceForDate(
   date: Date,

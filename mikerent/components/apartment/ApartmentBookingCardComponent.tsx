@@ -15,8 +15,11 @@ import {
 import {
   calculateTotalByMonth,
   getDisplayNightlyPrice,
+  getGuestMonthlyPriceRows,
   getMissingPriceMonths,
+  getMonthlyPriceRange,
 } from "@/lib/monthlyPricing";
+import { GuestMonthlyPricesPanel } from "./GuestMonthlyPricesPanel";
 
 type Props = {
   apartment: {
@@ -41,9 +44,12 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
   const [checkOut, setCheckOut] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const monthlyPrices = apartment.availability.monthlyPrices ?? {};
+  const priceRows = getGuestMonthlyPriceRows(monthlyPrices);
+  const priceRange = getMonthlyPriceRange(monthlyPrices);
   const displayNightlyPrice = getDisplayNightlyPrice(
     monthlyPrices,
     apartment.pricePerNight,
+    checkIn ? new Date(checkIn) : null,
   );
 
   const formatMissingMonths = (months: string[]) =>
@@ -160,10 +166,36 @@ export const ApartmentBookingCard = ({ apartment }: Props) => {
     <>
       <div className="sticky top-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="mb-6">
-          <span className="text-2xl font-bold">
-            {displayNightlyPrice} ₴
-          </span>
-          <span className="text-sm text-gray-500"> / ніч</span>
+          {priceRange && priceRange.min !== priceRange.max ? (
+            <>
+              <span className="text-2xl font-bold">
+                {priceRange.min.toLocaleString("uk-UA")} –{" "}
+                {priceRange.max.toLocaleString("uk-UA")} ₴
+              </span>
+              <span className="text-sm text-gray-500"> / ніч</span>
+              <p className="mt-1 text-xs text-gray-500">
+                Залежить від місяця (див. таблицю нижче)
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="text-2xl font-bold">
+                {(priceRows[0]?.pricePerNight ?? displayNightlyPrice).toLocaleString(
+                  "uk-UA",
+                )}{" "}
+                ₴
+              </span>
+              <span className="text-sm text-gray-500"> / ніч</span>
+            </>
+          )}
+        </div>
+
+        <div className="mb-6">
+          <GuestMonthlyPricesPanel
+            monthlyPrices={monthlyPrices}
+            checkIn={checkIn || undefined}
+            checkOut={checkOut || undefined}
+          />
         </div>
 
         {/* Выбор дат через календарь */}

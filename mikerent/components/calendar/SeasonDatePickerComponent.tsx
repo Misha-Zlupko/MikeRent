@@ -350,14 +350,21 @@ export const SeasonDatePicker = ({
           </button>
         </div>
 
-        {!currentMonthPrice && (
-          <div className="px-6 pt-4">
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              На {monthNames[currentMonth].toLowerCase()} {SEASON_YEAR} не вказана ціна.
-              Бронювання на цей місяць недоступне.
+        <div className="px-6 pt-4">
+          {currentMonthPrice ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+              <span className="font-semibold">
+                {monthNames[currentMonth]} {SEASON_YEAR}:
+              </span>{" "}
+              {currentMonthPrice.toLocaleString("uk-UA")} ₴ за ніч
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              На {monthNames[currentMonth].toLowerCase()} {SEASON_YEAR} не вказана
+              ціна. Бронювання на цей місяць недоступне.
+            </div>
+          )}
+        </div>
 
         {/* Дни недели */}
         <div className="grid grid-cols-7 gap-1 px-6 pt-4">
