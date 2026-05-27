@@ -26,6 +26,7 @@ export type InitialBookingValues = {
     id: string;
     title: string;
     city: string;
+    address: string;
     pricePerNight: number;
   };
   dateFrom: string;
@@ -73,6 +74,7 @@ export default function BookingForm({
     id: string;
     title: string;
     city: string;
+    address: string;
     pricePerNight: number;
   } | null>(null);
   const [dateFrom, setDateFrom] = useState("");
@@ -120,6 +122,7 @@ export default function BookingForm({
       id: apt.id,
       title: apt.title,
       city: apt.city,
+      address: apt.address,
       pricePerNight: apt.pricePerNight,
     });
 
@@ -249,7 +252,9 @@ export default function BookingForm({
               dateTo,
               total: clientTotal,
               remaining: remainingToPay,
-              address: selectedApartment?.city,
+              address: selectedApartment
+                ? `${selectedApartment.address}, ${selectedApartment.city}`
+                : undefined,
             }}
           />
         </>

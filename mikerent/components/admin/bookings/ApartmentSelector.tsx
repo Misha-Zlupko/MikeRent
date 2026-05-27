@@ -7,6 +7,7 @@ type Apartment = {
   id: string;
   title: string;
   city: string;
+  address: string;
   pricePerNight: number;
 };
 
@@ -39,17 +40,36 @@ export default function ApartmentSelector({
         value={selectedApartment?.id || ""}
         onChange={(e) => {
           const apt = apartments.find((a) => a.id === e.target.value);
-          onSelect(apt || null);
+          if (!apt) {
+            onSelect(null);
+            return;
+          }
+          onSelect({
+            ...apt,
+            address: apt.address ?? "",
+          });
         }}
         required
       >
         <option value="">Виберіть квартиру</option>
         {apartments.map((apt) => (
           <option key={apt.id} value={apt.id}>
-            {apt.title} ({apt.city}) - ${apt.pricePerNight}/ніч
+            {apt.title} — {apt.address}, {apt.city} — {apt.pricePerNight} ₴/ніч
           </option>
         ))}
       </select>
+
+      {selectedApartment && (
+        <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          <p className="font-medium text-gray-900">{selectedApartment.title}</p>
+          <p className="text-gray-600">
+            {selectedApartment.address}, {selectedApartment.city}
+          </p>
+          <p className="mt-1 text-gray-800">
+            {selectedApartment.pricePerNight} ₴ / ніч
+          </p>
+        </div>
+      )}
     </div>
   );
 }

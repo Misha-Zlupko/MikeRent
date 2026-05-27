@@ -30,6 +30,7 @@ type BookingApi = {
     id: string;
     title: string;
     city: string;
+    address: string;
     pricePerNight: number;
   };
 };
@@ -90,6 +91,7 @@ export default function EditBookingPage() {
         id: booking.apartment.id,
         title: booking.apartment.title,
         city: booking.apartment.city,
+        address: booking.apartment.address,
         pricePerNight: booking.apartment.pricePerNight,
       },
       dateFrom: booking.dateFrom,
