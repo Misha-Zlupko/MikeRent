@@ -200,3 +200,36 @@ body {
 .comments-swiper .swiper-slide {
   height: auto;
 }
+
+/* Картки квартир на головній — свайп фото (не pan-y — інакше горизонтальний свайп блокується) */
+.apartment-card-swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.apartment-card-swiper .swiper-slide {
+  height: auto;
+}
+
+.apartment-card-swiper .swiper-slide img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.apartment-card-swiper .swiper-pagination {
+  bottom: 8px !important;
+  line-height: 0;
+}
+
+.apartment-card-swiper .swiper-pagination-bullet {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  opacity: 0.7;
+}
+
+.apartment-card-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+  background: #fff;
+}

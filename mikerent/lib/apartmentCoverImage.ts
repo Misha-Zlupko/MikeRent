@@ -18,13 +18,22 @@ export function resolveCoverImageUrl(
   return list[0];
 }
 
-/** Одне фото для картки на головній. */
+/** До 5 фото для слайдера на головній (обкладинка першою). */
+const MAX_HOME_GALLERY_IMAGES = 5;
+
 export function homeCardImages(
   coverImageUrl: string | null | undefined,
   images: string[],
 ): string[] {
-  const cover = resolveCoverImageUrl(coverImageUrl, images);
-  return cover ? [cover] : [];
+  const list = filterPersistableImages(images);
+  if (list.length === 0) return [];
+
+  const cover = resolveCoverImageUrl(coverImageUrl, list);
+  const ordered = cover
+    ? [cover, ...list.filter((url) => url !== cover)]
+    : list;
+
+  return ordered.slice(0, MAX_HOME_GALLERY_IMAGES);
 }
 
 export function normalizeCoverImageUrlForSave(
