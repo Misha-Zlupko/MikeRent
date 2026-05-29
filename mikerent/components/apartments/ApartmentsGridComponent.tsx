@@ -22,16 +22,17 @@ export const ApartmentsGrid = ({
   dateRange,
   typeFilter = null,
 }: Props) => {
+  const getItemsPerLoad = () =>
+    typeof window !== "undefined" && window.innerWidth >= 1024 ? 16 : 8;
+
   const [itemsPerLoad, setItemsPerLoad] = useState(8);
   const [visibleCount, setVisibleCount] = useState(8);
 
+  // Лише оновлюємо крок «Показати ще», без скидання списку (на телефоні resize від адресного рядка ламав це)
   useEffect(() => {
     const updateLimit = () => {
-      const width = window.innerWidth;
-      const limit = width >= 1024 ? 16 : 8;
-
-      setItemsPerLoad(limit);
-      setVisibleCount(limit);
+      const limit = getItemsPerLoad();
+      setItemsPerLoad((prev) => (prev === limit ? prev : limit));
     };
 
     updateLimit();
@@ -100,10 +101,22 @@ export const ApartmentsGrid = ({
       });
   }, [apartments, typeFilter, guests, dateRange]);
 
-  // Сброс количества видимых карточек при смене фильтров
+  const filterKey = useMemo(
+    () =>
+      [
+        typeFilter ?? "",
+        guests,
+        dateRange.from?.toISOString() ?? "",
+        dateRange.to?.toISOString() ?? "",
+        apartments.length,
+      ].join("|"),
+    [typeFilter, guests, dateRange.from, dateRange.to, apartments.length],
+  );
+
+  // Скидання лише при зміні пошуку/фільтрів, не при «Показати ще» і не при resize
   useEffect(() => {
-    setVisibleCount(itemsPerLoad);
-  }, [filteredApartments, itemsPerLoad]);
+    setVisibleCount(getItemsPerLoad());
+  }, [filterKey]);
 
   const visibleApartments = filteredApartments.slice(0, visibleCount);
   const canLoadMore = visibleCount < filteredApartments.length;
@@ -172,7 +185,12 @@ export const ApartmentsGrid = ({
             <div className="flex justify-center mt-10">
               <button
                 type="button"
-                onClick={() => setVisibleCount((prev) => prev + itemsPerLoad)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setVisibleCount((prev) =>
+                    Math.min(prev + itemsPerLoad, filteredApartments.length),
+                  );
+                }}
                 className="
                   px-8 py-3 rounded-full
                   bg-main text-white font-medium
