@@ -15,6 +15,10 @@ import {
   isAgencyBooking,
   parseBookingRecordType,
 } from "@/lib/bookingRecordType";
+import {
+  mapBookingFromDb,
+  notifyBookingStatusChanged,
+} from "@/lib/telegramNotify";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -129,6 +133,13 @@ export async function PATCH(
       data: { status: status as BookingStatus },
       include: { apartment: true },
     });
+
+    if (existing.status !== booking.status) {
+      await notifyBookingStatusChanged(
+        mapBookingFromDb(booking, booking.apartment.title),
+        existing.status,
+      );
+    }
 
     return NextResponse.json(booking);
   } catch (error) {
@@ -267,6 +278,13 @@ export async function PUT(
         action: "update",
         summary: changeSummary,
       });
+    }
+
+    if (existing.status !== booking.status) {
+      await notifyBookingStatusChanged(
+        mapBookingFromDb(booking, booking.apartment.title),
+        existing.status,
+      );
     }
 
     return NextResponse.json(booking);

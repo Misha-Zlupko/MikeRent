@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
+import {
+  mapBookingRequestFromDb,
+  notifyBookingRequestProcessed,
+} from "@/lib/telegramNotify";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -17,7 +21,6 @@ async function verifyAdmin() {
   }
 }
 
-// POST /api/admin/booking-requests/[id]/called
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,22 +31,26 @@ export async function POST(
   }
 
   try {
-    const prismaAny = prisma as typeof prisma & {
-      bookingRequest: {
-        update: (args: unknown) => Promise<any>;
-      };
-    };
     const { id } = await params;
-    const request = await prismaAny.bookingRequest.update({
+    const request = await prisma.bookingRequest.update({
       where: { id },
       data: {
         status: "CALLED",
         calledAt: new Date(),
       },
-      select: { id: true, status: true, calledAt: true },
+      include: { apartment: { select: { title: true } } },
     });
 
-    return NextResponse.json(request);
+    await notifyBookingRequestProcessed(
+      mapBookingRequestFromDb(request),
+      "CALLED",
+    );
+
+    return NextResponse.json({
+      id: request.id,
+      status: request.status,
+      calledAt: request.calledAt,
+    });
   } catch (error) {
     console.error("Mark booking request called error:", error);
     return NextResponse.json(

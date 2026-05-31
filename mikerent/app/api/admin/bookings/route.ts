@@ -11,6 +11,7 @@ import {
   isAgencyBooking,
   parseBookingRecordType,
 } from "@/lib/bookingRecordType";
+import { mapBookingFromDb, notifyBookingNew } from "@/lib/telegramNotify";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -116,6 +117,7 @@ export async function POST(req: Request) {
         status: status as BookingStatus,
         recordType,
       },
+      include: { apartment: { select: { title: true } } },
     });
 
     if (isAgencyBooking(recordType)) {
@@ -140,6 +142,10 @@ export async function POST(req: Request) {
       action: "create",
       summary: `Нова бронь (${recordType}): ${typeLabel}`,
     });
+
+    await notifyBookingNew(
+      mapBookingFromDb(booking, booking.apartment.title, "Календар адмінки"),
+    );
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {

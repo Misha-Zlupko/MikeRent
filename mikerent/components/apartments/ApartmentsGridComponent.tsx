@@ -23,10 +23,10 @@ export const ApartmentsGrid = ({
   typeFilter = null,
 }: Props) => {
   const getItemsPerLoad = () =>
-    typeof window !== "undefined" && window.innerWidth >= 1024 ? 16 : 8;
+    typeof window !== "undefined" && window.innerWidth >= 1280 ? 16 : 9;
 
-  const [itemsPerLoad, setItemsPerLoad] = useState(8);
-  const [visibleCount, setVisibleCount] = useState(8);
+  const [itemsPerLoad, setItemsPerLoad] = useState(9);
+  const [visibleCount, setVisibleCount] = useState(9);
 
   // Лише оновлюємо крок «Показати ще», без скидання списку (на телефоні resize від адресного рядка ламав це)
   useEffect(() => {
@@ -168,7 +168,8 @@ export const ApartmentsGrid = ({
               grid-cols-2
               gap-4
               md:grid-cols-3
-              lg:grid-cols-4
+              lg:grid-cols-3
+              xl:grid-cols-4
             "
           >
             {visibleApartments.map((apartment, index) => (

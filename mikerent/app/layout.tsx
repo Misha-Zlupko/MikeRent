@@ -5,6 +5,7 @@ import { Roboto } from "next/font/google";
 import { HeaderComponent } from "@/components/HeaderComponent";
 import { FooterComponent } from "@/components/FooterComponent";
 import { ActivityHeartbeatLazy } from "@/components/ActivityHeartbeatLazy";
+import { HousingInquiryWidgetLazy } from "@/components/housing-inquiry/HousingInquiryWidgetLazy";
 
 const roboto = Roboto({
   subsets: ["latin", "cyrillic"],
@@ -83,6 +84,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
 
         <FooterComponent />
+        <HousingInquiryWidgetLazy />
       </body>
     </html>
   );

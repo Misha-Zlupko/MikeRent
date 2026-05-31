@@ -207,3 +207,45 @@ model ActiveUser {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+enum HousingInquiryStatus {
+  NEW
+  CALLED
+  COMPLETED
+  REJECTED
+}
+
+enum HousingPropertyPreference {
+  ANY
+  APARTMENT
+  HOUSE
+  ROOM
+}
+
+model HousingInquiry {
+  id              String                    @id @default(cuid())
+  inquiryNumber   String                    @unique
+  name            String?
+  phone           String
+  contactMethod   String?
+  adults          Int                       @default(1)
+  children        Int                       @default(0)
+  budgetPerNight  Int?
+  propertyType    HousingPropertyPreference @default(ANY)
+  checkIn         DateTime?
+  checkOut        DateTime?
+  datesFlexible   Boolean                   @default(false)
+  flexibilityDays Int?
+  hasPets         Boolean                   @default(false)
+  petsDescription String?
+  notes           String?
+  status          HousingInquiryStatus      @default(NEW)
+  calledAt        DateTime?
+  processedAt     DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  withPets        Boolean                   @default(false)
+  petsDetails     String?
+
+  @@index([status, createdAt])
+}

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Home, Calendar, Users, PlusCircle, ClipboardList } from "lucide-react";
+import { Home, Calendar, Users, PlusCircle, ClipboardList, MessageSquarePlus } from "lucide-react";
 import { BackupDataButton } from "@/components/admin/BackupDataButton";
 import SeasonDashboard from "@/components/admin/dashboard/SeasonDashboard";
 import AdminReminders from "@/components/admin/dashboard/AdminReminders";
@@ -17,6 +17,7 @@ import WorkerActivityPanel from "@/components/admin/dashboard/WorkerActivityPane
 import PaymentOverviewPanel from "@/components/admin/dashboard/PaymentOverviewPanel";
 import { getPaymentOverview } from "@/lib/admin/paymentOverview";
 import { agencyBookingWhere } from "@/lib/bookingRecordType";
+import { countActiveHousingInquiries } from "@/lib/housingInquiryDb";
 
 export default async function AdminDashboard() {
   const seasonYear = new Date().getFullYear();
@@ -38,6 +39,7 @@ export default async function AdminDashboard() {
     apartmentsCount,
     bookingsCount,
     requestsCount,
+    housingInquiriesCount,
     activeUsersCount,
     recentBookings,
     seasonStats,
@@ -55,6 +57,7 @@ export default async function AdminDashboard() {
         },
       },
     }),
+    countActiveHousingInquiries(),
     prisma.activeUser.count({ where: { lastActivity: { gte: activeCutoff } } }),
     prisma.booking.findMany({
       where: agencyBookingWhere,
@@ -107,7 +110,7 @@ export default async function AdminDashboard() {
       {/* Головний контент */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Статистика */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {/* Картка: Квартири */}
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -142,6 +145,24 @@ export default async function AdminDashboard() {
               className="text-sm text-amber-600 hover:text-amber-800 hover:underline mt-2 inline-block"
             >
               Відкрити заявки →
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-teal-100 rounded-full">
+                <MessageSquarePlus className="w-6 h-6 text-teal-600" />
+              </div>
+              <span className="text-3xl font-bold text-teal-600">
+                {housingInquiriesCount}
+              </span>
+            </div>
+            <h3 className="text-gray-600 font-medium">Запити на підбір</h3>
+            <Link
+              href="/admin/housing-inquiries"
+              className="text-sm text-teal-600 hover:text-teal-800 hover:underline mt-2 inline-block"
+            >
+              Відкрити запити →
             </Link>
           </div>
 

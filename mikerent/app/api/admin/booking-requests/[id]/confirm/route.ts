@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
+import {
+  mapBookingRequestFromDb,
+  notifyBookingRequestConfirmFailed,
+  notifyBookingRequestProcessed,
+} from "@/lib/telegramNotify";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
@@ -24,7 +29,6 @@ async function verifyAdmin() {
   }
 }
 
-// POST /api/admin/booking-requests/[id]/confirm
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -35,14 +39,8 @@ export async function POST(
   }
 
   try {
-    const prismaAny = prisma as typeof prisma & {
-      bookingRequest: {
-        findUnique: (args: unknown) => Promise<any>;
-        update: (args: unknown) => Promise<any>;
-      };
-    };
     const { id } = await params;
-    const request = await prismaAny.bookingRequest.findUnique({
+    const request = await prisma.bookingRequest.findUnique({
       where: { id },
       include: { apartment: true },
     });
@@ -50,6 +48,8 @@ export async function POST(
     if (!request) {
       return NextResponse.json({ error: "Заявку не знайдено" }, { status: 404 });
     }
+
+    const notifyPayload = mapBookingRequestFromDb(request);
 
     if (request.status === "CONFIRMED" || request.processedAt) {
       return NextResponse.json(
@@ -67,6 +67,10 @@ export async function POST(
     });
 
     if (conflict) {
+      await notifyBookingRequestConfirmFailed(
+        notifyPayload,
+        "Конфлікт дат — на ці дати вже є активне бронювання",
+      );
       return NextResponse.json(
         { error: "Є конфлікт дат із вже існуючим бронюванням" },
         { status: 409 },
@@ -84,12 +88,12 @@ export async function POST(
           guestContact: request.comment,
           status: "CONFIRMED",
           ownerPhone: request.apartment.ownerPhone ?? null,
+          totalAmount: request.totalPrice,
         },
+        include: { apartment: true },
       });
 
-      await (tx as typeof tx & {
-        bookingRequest: { update: (args: unknown) => Promise<any> };
-      }).bookingRequest.update({
+      await tx.bookingRequest.update({
         where: { id: request.id },
         data: {
           status: "CONFIRMED",
@@ -99,6 +103,10 @@ export async function POST(
       });
 
       return booking;
+    });
+
+    await notifyBookingRequestProcessed(notifyPayload, "CONFIRMED", {
+      bookingId: result.id,
     });
 
     return NextResponse.json({ success: true, bookingId: result.id });

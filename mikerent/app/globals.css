@@ -233,3 +233,16 @@ body {
   opacity: 1;
   background: #fff;
 }
+
+.home-listing-card {
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.home-listing-card:hover {
+  border-color: rgba(0, 161, 241, 0.25);
+  box-shadow: 0 12px 32px -10px rgba(15, 23, 42, 0.14);
+  transform: translateY(-2px);
+}

@@ -5,6 +5,10 @@ import {
   resolveGuestMonthlyPrices,
   getMissingPriceMonths,
 } from "@/lib/monthlyPricing";
+import {
+  mapBookingRequestFromDb,
+  notifyBookingRequestNew,
+} from "@/lib/telegramNotify";
 
 function generateBookingNumber() {
   const now = new Date();
@@ -28,47 +32,8 @@ function withUtcHour(date: Date, hour: number) {
   return next;
 }
 
-async function sendTelegramBookingNotification(params: {
-  token: string;
-  chatId: string;
-  message: string;
-}) {
-  const url = `https://api.telegram.org/bot${params.token}/sendMessage`;
-
-  const sendOnce = async () => {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: params.chatId,
-        text: params.message,
-      }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    return { response, payload };
-  };
-
-  // Простий ретрай на випадок тимчасової помилки Telegram API
-  let result = await sendOnce();
-  if (!result.response.ok) {
-    result = await sendOnce();
-  }
-
-  if (!result.response.ok) {
-    throw new Error(
-      `Telegram API error: ${result.response.status} ${JSON.stringify(result.payload)}`,
-    );
-  }
-}
-
-// POST /api/booking-requests
 export async function POST(req: Request) {
   try {
-    const prismaAny = prisma as typeof prisma & {
-      bookingRequest: {
-        create: (args: unknown) => Promise<any>;
-      };
-    };
     const data = await req.json();
     const checkInRaw = parseDate(data.checkIn);
     const checkOutRaw = parseDate(data.checkOut);
@@ -113,10 +78,9 @@ export async function POST(req: Request) {
       monthlyPrices,
     );
 
-    const generatedNumber = generateBookingNumber();
-    const bookingRequest = await prismaAny.bookingRequest.create({
+    const bookingRequest = await prisma.bookingRequest.create({
       data: {
-        bookingNumber: generatedNumber,
+        bookingNumber: generateBookingNumber(),
         apartmentId: String(data.apartmentId),
         phone: String(data.phone),
         comment: data.comment ? String(data.comment) : null,
@@ -133,45 +97,9 @@ export async function POST(req: Request) {
       },
     });
 
-    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-    let telegramSent = false;
-
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-      const message = `
-📞 НОВА ЗАЯВКА НА БРОНЮВАННЯ
-
-🏢 Апартаменти: ${bookingRequest.apartment.title}
-📋 Номер заявки: ${bookingRequest.bookingNumber}
-
-📱 Телефон: ${bookingRequest.phone}
-💬 Коментар: ${bookingRequest.comment || "Без коментаря"}
-
-📅 Дати:
-Заїзд: ${bookingRequest.checkIn.toLocaleDateString("uk-UA")}
-Виїзд: ${bookingRequest.checkOut.toLocaleDateString("uk-UA")}
-Ночей: ${bookingRequest.nights}
-
-👥 Гостей: ${bookingRequest.guests}
-💰 Сума: ${bookingRequest.totalPrice} ₴
-      `.trim();
-
-      try {
-        await sendTelegramBookingNotification({
-          token: TELEGRAM_BOT_TOKEN,
-          chatId: TELEGRAM_CHAT_ID,
-          message,
-        });
-        telegramSent = true;
-      } catch (error) {
-        console.error("Telegram notify error:", error);
-      }
-    } else {
-      console.warn(
-        "Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing",
-      );
-    }
+    const telegramSent = await notifyBookingRequestNew(
+      mapBookingRequestFromDb(bookingRequest),
+    );
 
     return NextResponse.json(
       {
