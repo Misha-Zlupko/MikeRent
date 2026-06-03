@@ -22,8 +22,12 @@ export const ApartmentsGrid = ({
   dateRange,
   typeFilter = null,
 }: Props) => {
-  const getItemsPerLoad = () =>
-    typeof window !== "undefined" && window.innerWidth >= 1280 ? 16 : 9;
+  const getItemsPerLoad = () => {
+    if (typeof window === "undefined") return 6;
+    if (window.innerWidth >= 1280) return 16;
+    if (window.innerWidth < 768) return 6;
+    return 9;
+  };
 
   const [itemsPerLoad, setItemsPerLoad] = useState(9);
   const [visibleCount, setVisibleCount] = useState(9);
@@ -166,7 +170,8 @@ export const ApartmentsGrid = ({
             className="
               grid
               grid-cols-2
-              gap-4
+              gap-3
+              sm:gap-4
               md:grid-cols-3
               lg:grid-cols-3
               xl:grid-cols-4

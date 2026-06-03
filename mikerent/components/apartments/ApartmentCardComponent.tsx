@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Heart, MapPin, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Heart,
+  MapPin,
+  Users,
+  Waves,
+} from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -104,16 +111,16 @@ export const ApartmentCard = ({
   }
 
   return (
-    <article className="home-listing-card group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white">
+    <article className="home-listing-card group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white max-md:rounded-xl">
       <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-100">
         <button
           type="button"
           onClick={toggleFavorite}
           aria-label={isFavorite ? "Прибрати з обраного" : "Додати в обране"}
-          className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-sm backdrop-blur-sm transition hover:scale-105 active:scale-95"
+          className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-sm backdrop-blur-sm transition hover:scale-105 active:scale-95 max-md:right-2 max-md:top-2 max-md:h-7 max-md:w-7"
         >
           <Heart
-            className={`h-4 w-4 transition ${
+            className={`h-4 w-4 transition max-md:h-3 max-md:w-3 ${
               isFavorite ? "fill-main text-main" : "text-slate-600"
             }`}
           />
@@ -121,8 +128,20 @@ export const ApartmentCard = ({
 
         {apartment.seaDistanceMin != null &&
           apartment.seaDistanceMax != null && (
-            <div className="pointer-events-none absolute left-3 top-3 z-20 rounded-lg bg-slate-900/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
-              {apartment.seaDistanceMin}–{apartment.seaDistanceMax} хв до моря
+            <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-slate-900/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm max-md:left-2 max-md:top-2 max-md:max-w-[calc(100%-2.5rem)] max-md:gap-0.5 max-md:rounded-md max-md:bg-slate-900/80 max-md:px-1.5 max-md:py-0.5 max-md:text-[9px] max-md:shadow-sm">
+              <Waves
+                className="hidden h-3 w-3 shrink-0 text-sky-200 max-md:block max-md:h-2.5 max-md:w-2.5"
+                aria-hidden
+              />
+              <span className="truncate leading-none max-md:font-medium">
+                <span className="max-md:hidden">
+                  {apartment.seaDistanceMin}–{apartment.seaDistanceMax} хв до
+                  моря
+                </span>
+                <span className="hidden max-md:inline">
+                  {apartment.seaDistanceMin}–{apartment.seaDistanceMax} хв
+                </span>
+              </span>
             </div>
           )}
 
@@ -207,28 +226,36 @@ export const ApartmentCard = ({
           </>
         )}
 
-        <div className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-xl bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur-sm">
-          <span className="text-base font-bold text-slate-900">
+        <div className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-xl bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur-sm max-md:bottom-1.5 max-md:right-1.5 max-md:flex max-md:min-w-[3.25rem] max-md:items-center max-md:justify-center max-md:gap-0.5 max-md:rounded-md max-md:px-1.5 max-md:py-1 max-md:text-center">
+          <span className="text-base font-bold text-slate-900 max-md:text-[10px] max-md:font-semibold max-md:leading-none">
             {displayPrice} ₴
           </span>
-          <span className="text-xs font-normal text-slate-500"> /ніч</span>
+          <span className="text-xs font-normal text-slate-500 max-md:text-[8px] max-md:leading-none">
+            {" "}
+            /ніч
+          </span>
         </div>
       </div>
 
-      <Link href={apartmentHref} className="flex flex-1 flex-col p-4">
-        <h3 className="mb-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 transition group-hover:text-main">
+      <Link href={apartmentHref} className="flex flex-1 flex-col p-4 max-md:p-2.5">
+        <h3 className="mb-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 transition group-hover:text-main max-md:mb-1 max-md:text-[13px]">
           {apartment.title}
         </h3>
 
-        <p className="mb-3 flex items-start gap-1.5 text-sm text-slate-500">
-          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+        <p className="mb-3 flex items-start gap-1.5 text-sm text-slate-500 max-md:mb-2 max-md:gap-1 max-md:text-[11px]">
+          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 max-md:mt-px max-md:h-3 max-md:w-3" />
           <span className="line-clamp-1">{apartment.address}</span>
         </p>
 
-        <div className="mt-auto flex items-center gap-1.5 text-xs text-slate-400">
-          <Users className="h-3.5 w-3.5" />
-          <span>
-            {apartment.guests} гостей · {apartment.beds} ліжка
+        <div className="mt-auto flex items-center gap-1.5 text-xs text-slate-400 max-md:gap-1 max-md:text-[10px]">
+          <Users className="h-3.5 w-3.5 shrink-0 max-md:h-3 max-md:w-3" />
+          <span className="line-clamp-1">
+            <span className="max-md:hidden">
+              {apartment.guests} гостей · {apartment.beds} ліжка
+            </span>
+            <span className="hidden max-md:inline">
+              {apartment.guests} гост. · {apartment.beds} ліж.
+            </span>
           </span>
         </div>
       </Link>

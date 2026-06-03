@@ -234,6 +234,18 @@ body {
   background: #fff;
 }
 
+@media (max-width: 767px) {
+  .apartment-card-swiper .swiper-pagination {
+    bottom: 6px !important;
+  }
+
+  .apartment-card-swiper .swiper-pagination-bullet {
+    width: 4px;
+    height: 4px;
+    margin: 0 2px !important;
+  }
+}
+
 .home-listing-card {
   transition:
     box-shadow 0.25s ease,
