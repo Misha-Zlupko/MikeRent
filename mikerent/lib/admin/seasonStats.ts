@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { bookingStoredToUah } from "@/lib/bookingAmounts";
+import { bookingMoneyToUah } from "@/lib/bookingAmounts";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
 import { agencyBookingWhere } from "@/lib/bookingRecordType";
 
@@ -78,8 +78,9 @@ export async function getSeasonDashboardStats(year: number) {
     for (const b of inMonth) {
       const nights = overlapNightsInMonth(b.dateFrom, b.dateTo, year, month);
       bookedNights += nights;
-      const total = bookingStoredToUah(b.totalAmount) ?? 0;
-      const profit = bookingStoredToUah(b.ourProfit) ?? 0;
+      const money = bookingMoneyToUah(b);
+      const total = money.clientTotal;
+      const profit = money.ourProfit;
       const tripNights = Math.max(
         1,
         Math.ceil(

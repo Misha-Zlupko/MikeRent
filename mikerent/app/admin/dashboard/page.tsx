@@ -2,10 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Home, Calendar, Users, PlusCircle, ClipboardList, MessageSquarePlus } from "lucide-react";
+import { Home, Calendar, Users, PlusCircle, ClipboardList, MessageSquarePlus, TrendingUp } from "lucide-react";
 import { BackupDataButton } from "@/components/admin/BackupDataButton";
 import SeasonDashboard from "@/components/admin/dashboard/SeasonDashboard";
 import AdminReminders from "@/components/admin/dashboard/AdminReminders";
+import { CheckInNotifyButton } from "@/components/admin/dashboard/CheckInNotifyButton";
 import AuditLogCard from "@/components/admin/dashboard/AuditLogCard";
 import ExportTools from "@/components/admin/ExportTools";
 import { getSeasonDashboardStats } from "@/lib/admin/seasonStats";
@@ -212,6 +213,34 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
+        {owner && (
+          <div className="mb-8">
+            <Link
+              href="/admin/earnings"
+              className="block rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-6 shadow-sm transition hover:shadow-md"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100">
+                    <TrendingUp className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Заробіток
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Скільки отримано, на бронях і скільки буде зароблено
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-emerald-700">
+                  Відкрити →
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
         <div className="mb-8">
           <PaymentOverviewPanel
             checkedInUnpaid={paymentOverview.checkedInUnpaid}
@@ -229,6 +258,12 @@ export default async function AdminDashboard() {
             <ManageWorkersCard />
           </div>
         )}
+
+        {owner ? (
+          <div className="mb-8">
+            <CheckInNotifyButton />
+          </div>
+        ) : null}
 
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <SeasonDashboard

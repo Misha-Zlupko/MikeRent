@@ -136,7 +136,7 @@ export async function PATCH(
 
     if (existing.status !== booking.status) {
       await notifyBookingStatusChanged(
-        mapBookingFromDb(booking, booking.apartment.title),
+        mapBookingFromDb(booking, booking.apartment),
         existing.status,
       );
     }
@@ -282,7 +282,7 @@ export async function PUT(
 
     if (existing.status !== booking.status) {
       await notifyBookingStatusChanged(
-        mapBookingFromDb(booking, booking.apartment.title),
+        mapBookingFromDb(booking, booking.apartment),
         existing.status,
       );
     }

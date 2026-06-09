@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { bookingStoredToUah } from "@/lib/bookingAmounts";
+import { bookingMoneyToUah } from "@/lib/bookingAmounts";
 import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
 import { agencyBookingWhere } from "@/lib/bookingRecordType";
@@ -96,17 +96,13 @@ export async function getAdminReminders(): Promise<AdminReminder[]> {
     if (!isActiveBookingStatus(b.status)) continue;
     if (b.paymentStatus === "PAID_IN_FULL") continue;
 
-    const clientTotal = bookingStoredToUah(b.totalAmount) ?? 0;
-    const ownerTotal = bookingStoredToUah(b.ownerPayout) ?? 0;
-    const profit = bookingStoredToUah(b.ourProfit) ?? 0;
-    const prepaidToMe = bookingStoredToUah(b.prepaidToMe) ?? 0;
-    const prepaidToOwner = bookingStoredToUah(b.prepaidToOwner) ?? 0;
+    const money = bookingMoneyToUah(b);
     const { remainingToPay } = calcPrepaymentTotals({
-      clientTotal,
-      ownerTotalPrice: ownerTotal,
-      ourProfit: profit,
-      prepaidToMe,
-      prepaidToOwner,
+      clientTotal: money.clientTotal,
+      ownerTotalPrice: money.ownerPayout,
+      ourProfit: money.ourProfit,
+      prepaidToMe: money.prepaidToMe,
+      prepaidToOwner: money.prepaidToOwner,
     });
     if (remainingToPay <= 0) continue;
 

@@ -1,5 +1,5 @@
 import type { PaymentStatus } from "@prisma/client";
-import { bookingStoredToUah } from "@/lib/bookingAmounts";
+import { bookingMoneyToUah } from "@/lib/bookingAmounts";
 import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import { PAYMENT_STATUS_LABELS } from "@/lib/paymentStatus";
 
@@ -31,11 +31,12 @@ export function getBookingPaymentInfo(params: {
   const from = new Date(params.dateFrom);
   const to = new Date(params.dateTo);
 
-  const clientTotal = bookingStoredToUah(params.totalAmount) ?? 0;
-  const ownerTotal = bookingStoredToUah(params.ownerPayout) ?? 0;
-  const profit = bookingStoredToUah(params.ourProfit) ?? 0;
-  const prepaidToMe = bookingStoredToUah(params.prepaidToMe) ?? 0;
-  const prepaidToOwner = bookingStoredToUah(params.prepaidToOwner) ?? 0;
+  const money = bookingMoneyToUah(params);
+  const clientTotal = money.clientTotal;
+  const ownerTotal = money.ownerPayout;
+  const profit = money.ourProfit;
+  const prepaidToMe = money.prepaidToMe;
+  const prepaidToOwner = money.prepaidToOwner;
 
   const totals = calcPrepaymentTotals({
     clientTotal,

@@ -14,7 +14,7 @@ import {
   LayoutGrid,
   History,
 } from "lucide-react";
-import { bookingStoredToUah } from "@/lib/bookingAmounts";
+import { bookingMoneyToUah } from "@/lib/bookingAmounts";
 import CancelBookingButton from "@/components/admin/bookings/CancelBookingButton";
 import RestoreBookingButton from "@/components/admin/bookings/RestoreBookingButton";
 import { isActiveBookingStatus } from "@/lib/bookingStatus";
@@ -163,9 +163,10 @@ function BookingTableRow({
   const isActive = overlapsToday(booking.dateFrom, booking.dateTo, now);
   const isFuture = startOfDay(new Date(booking.dateFrom)) > endOfDay(now);
 
-  const totalUah = bookingStoredToUah(booking.totalAmount);
-  const ownerUah = bookingStoredToUah(booking.ownerPayout);
-  const profitUah = bookingStoredToUah(booking.ourProfit);
+  const money = bookingMoneyToUah(booking);
+  const totalUah = booking.totalAmount != null ? money.clientTotal : null;
+  const ownerUah = booking.ownerPayout != null ? money.ownerPayout : null;
+  const profitUah = booking.ourProfit != null ? money.ourProfit : null;
 
   let statusLabel = "";
   let statusClass = "bg-gray-100 text-gray-700";

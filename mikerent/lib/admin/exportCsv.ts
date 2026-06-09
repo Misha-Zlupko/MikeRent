@@ -1,5 +1,5 @@
 import type { Apartment, Booking, PaymentStatus } from "@prisma/client";
-import { bookingStoredToUah } from "@/lib/bookingAmounts";
+import { bookingMoneyToUah } from "@/lib/bookingAmounts";
 import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import { PAYMENT_STATUS_LABELS } from "@/lib/paymentStatus";
 
@@ -58,11 +58,12 @@ export function buildBookingsCsv(bookings: BookingWithApt[], guestNotes: Map<str
         (b.dateTo.getTime() - b.dateFrom.getTime()) / (1000 * 60 * 60 * 24),
       ),
     );
-    const clientTotal = bookingStoredToUah(b.totalAmount) ?? 0;
-    const ownerTotal = bookingStoredToUah(b.ownerPayout) ?? 0;
-    const profit = bookingStoredToUah(b.ourProfit) ?? 0;
-    const prepaidToMe = bookingStoredToUah(b.prepaidToMe) ?? 0;
-    const prepaidToOwner = bookingStoredToUah(b.prepaidToOwner) ?? 0;
+    const money = bookingMoneyToUah(b);
+    const clientTotal = money.clientTotal;
+    const ownerTotal = money.ownerPayout;
+    const profit = money.ourProfit;
+    const prepaidToMe = money.prepaidToMe;
+    const prepaidToOwner = money.prepaidToOwner;
     const { remainingToPay } = calcPrepaymentTotals({
       clientTotal,
       ownerTotalPrice: ownerTotal,

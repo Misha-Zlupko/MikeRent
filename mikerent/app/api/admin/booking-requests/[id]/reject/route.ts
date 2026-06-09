@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import {
+  APARTMENT_TELEGRAM_SELECT,
   mapBookingRequestFromDb,
   notifyBookingRequestProcessed,
 } from "@/lib/telegramNotify";
@@ -38,7 +39,7 @@ export async function POST(
         status: "REJECTED",
         processedAt: new Date(),
       },
-      include: { apartment: { select: { title: true } } },
+      include: { apartment: { select: APARTMENT_TELEGRAM_SELECT } },
     });
 
     await notifyBookingRequestProcessed(

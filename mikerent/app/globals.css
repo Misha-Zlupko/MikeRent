@@ -258,3 +258,41 @@ body {
   box-shadow: 0 12px 32px -10px rgba(15, 23, 42, 0.14);
   transform: translateY(-2px);
 }
+
+/* FAQ accordion — плавне розкриття */
+.faq-accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-accordion-panel--open {
+  grid-template-rows: 1fr;
+}
+
+.faq-accordion-panel__inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.faq-accordion-panel__content {
+  margin: 0 1.25rem 1.25rem;
+  padding: 0.75rem 0 0.25rem 1rem;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.05s,
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.05s;
+}
+
+@media (min-width: 768px) {
+  .faq-accordion-panel__content {
+    margin: 0 1.75rem 1.5rem;
+    padding: 0.85rem 0 0.35rem 1.25rem;
+  }
+}
+
+.faq-accordion-panel--open .faq-accordion-panel__content {
+  opacity: 1;
+  transform: translateY(0);
+}

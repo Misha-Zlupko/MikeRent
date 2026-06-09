@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { Home, MessageSquarePlus } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import HousingInquiryActions from "@/components/admin/housing-inquiries/HousingInquiryActions";
 
@@ -27,7 +27,7 @@ export default async function HousingInquiriesPage() {
             className="text-gray-500 transition-colors hover:text-gray-700"
             title="Назад до дашборду"
           >
-            <Home size={24} />
+            <ArrowLeft size={24} />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">

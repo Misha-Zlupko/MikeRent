@@ -34,6 +34,53 @@ function phoneLink(phone: string) {
   return `<a href="tel:${href}">${escapeHtml(phone)}</a>`;
 }
 
+function formatAddress(city: string, address: string) {
+  return `${city}, ${address}`;
+}
+
+function apartmentPublicUrl(apartmentId: string) {
+  return `${siteUrl()}/apartments/${apartmentId}`;
+}
+
+export type ApartmentNotifyContext = {
+  apartmentId: string;
+  apartmentTitle: string;
+  city: string;
+  address: string;
+  ownerName: string | null;
+  ownerPhone?: string | null;
+};
+
+export const APARTMENT_TELEGRAM_SELECT = {
+  id: true,
+  title: true,
+  city: true,
+  address: true,
+  ownerName: true,
+  ownerPhone: true,
+} as const;
+
+function apartmentContextFields(ctx: ApartmentNotifyContext): CardField[] {
+  const url = apartmentPublicUrl(ctx.apartmentId);
+  const fields: CardField[] = [
+    {
+      label: "Квартира",
+      value: `<a href="${url}">${escapeHtml(ctx.apartmentTitle)}</a>`,
+      rawHtml: true,
+    },
+    { label: "Адреса", value: formatAddress(ctx.city, ctx.address) },
+    { label: "Хазяїн", value: ctx.ownerName?.trim() || "—" },
+  ];
+  if (ctx.ownerPhone?.trim()) {
+    fields.push({
+      label: "Тел. хазяїна",
+      value: phoneLink(ctx.ownerPhone.trim()),
+      rawHtml: true,
+    });
+  }
+  return fields;
+}
+
 function formatDates(from: Date | null | undefined, to: Date | null | undefined) {
   if (from && to) {
     return `${from.toLocaleDateString("uk-UA")} — ${to.toLocaleDateString("uk-UA")}`;
@@ -233,7 +280,12 @@ export async function notifyHousingInquiryProcessed(
 
 export type BookingRequestNotify = {
   bookingNumber: string;
+  apartmentId: string;
   apartmentTitle: string;
+  city: string;
+  address: string;
+  ownerName: string | null;
+  ownerPhone?: string | null;
   phone: string;
   comment: string | null;
   checkIn: Date;
@@ -245,9 +297,9 @@ export type BookingRequestNotify = {
 
 function bookingRequestFields(req: BookingRequestNotify): CardField[] {
   return [
-    { label: "Номер", value: req.bookingNumber },
-    { label: "Житло", value: req.apartmentTitle },
-    { label: "Телефон", value: phoneLink(req.phone), rawHtml: true },
+    { label: "Номер заявки", value: req.bookingNumber },
+    ...apartmentContextFields(req),
+    { label: "Телефон гостя", value: phoneLink(req.phone), rawHtml: true },
     { label: "Дати", value: formatDates(req.checkIn, req.checkOut) },
     { label: "Ночей", value: String(req.nights) },
     { label: "Гості", value: String(req.guests) },
@@ -320,7 +372,12 @@ export async function notifyBookingRequestConfirmFailed(
 
 export type BookingNotify = {
   id: string;
+  apartmentId: string;
   apartmentTitle: string;
+  city: string;
+  address: string;
+  ownerName: string | null;
+  ownerPhone?: string | null;
   guestName: string | null;
   guestPhone: string | null;
   guestCount: number | null;
@@ -330,18 +387,25 @@ export type BookingNotify = {
   status: string;
   recordType?: string;
   source?: string;
+  bookingRequestNumber?: string;
 };
 
 function bookingFields(b: BookingNotify): CardField[] {
   const fields: CardField[] = [
-    { label: "ID", value: b.id.slice(0, 8) + "…" },
-    { label: "Житло", value: b.apartmentTitle },
+    { label: "ID броні", value: b.id.slice(0, 8) + "…" },
+    ...apartmentContextFields(b),
     { label: "Статус", value: bookingStatusLabels[b.status] ?? b.status },
   ];
+  if (b.bookingRequestNumber) {
+    fields.splice(1, 0, {
+      label: "Заявка",
+      value: b.bookingRequestNumber,
+    });
+  }
   if (b.guestName) fields.push({ label: "Гість", value: b.guestName });
   if (b.guestPhone) {
     fields.push({
-      label: "Телефон",
+      label: "Телефон гостя",
       value: phoneLink(b.guestPhone),
       rawHtml: true,
     });
@@ -431,11 +495,23 @@ export function mapBookingRequestFromDb(request: {
   nights: number;
   guests: number;
   totalPrice: number;
-  apartment: { title: string };
+  apartment: {
+    id: string;
+    title: string;
+    city: string;
+    address: string;
+    ownerName: string | null;
+    ownerPhone?: string | null;
+  };
 }): BookingRequestNotify {
   return {
     bookingNumber: request.bookingNumber,
+    apartmentId: request.apartment.id,
     apartmentTitle: request.apartment.title,
+    city: request.apartment.city,
+    address: request.apartment.address,
+    ownerName: request.apartment.ownerName,
+    ownerPhone: request.apartment.ownerPhone,
     phone: request.phone,
     comment: request.comment,
     checkIn: request.checkIn,
@@ -443,6 +519,24 @@ export function mapBookingRequestFromDb(request: {
     nights: request.nights,
     guests: request.guests,
     totalPrice: request.totalPrice,
+  };
+}
+
+export function mapApartmentNotifyContext(apartment: {
+  id: string;
+  title: string;
+  city: string;
+  address: string;
+  ownerName: string | null;
+  ownerPhone?: string | null;
+}): ApartmentNotifyContext {
+  return {
+    apartmentId: apartment.id,
+    apartmentTitle: apartment.title,
+    city: apartment.city,
+    address: apartment.address,
+    ownerName: apartment.ownerName,
+    ownerPhone: apartment.ownerPhone,
   };
 }
 
@@ -458,12 +552,20 @@ export function mapBookingFromDb(
     status: string;
     recordType?: string;
   },
-  apartmentTitle: string,
+  apartment: {
+    id: string;
+    title: string;
+    city: string;
+    address: string;
+    ownerName: string | null;
+    ownerPhone?: string | null;
+  },
   source?: string,
+  extra?: { bookingRequestNumber?: string },
 ): BookingNotify {
   return {
     id: booking.id,
-    apartmentTitle,
+    ...mapApartmentNotifyContext(apartment),
     guestName: booking.guestName,
     guestPhone: booking.guestPhone,
     guestCount: booking.guestCount,
@@ -473,5 +575,72 @@ export function mapBookingFromDb(
     status: booking.status,
     recordType: booking.recordType,
     source,
+    bookingRequestNumber: extra?.bookingRequestNumber,
   };
+}
+
+// ── Щоденне нагадування про заселення ──
+
+export type DailyCheckInNotify = {
+  dateLabel: string;
+  items: {
+    apartmentTitle: string;
+    apartmentId: string;
+    city: string;
+    address: string;
+    ownerName: string | null;
+    ownerPhone: string | null;
+    guestName: string | null;
+    guestPhone: string | null;
+    guestCount: number | null;
+    clientTotalUah: number;
+    ourProfitUah: number;
+    checkInLabel: string;
+    checkOutLabel: string;
+  }[];
+};
+
+export async function notifyDailyCheckIns(payload: DailyCheckInNotify) {
+  const line = "─────────────────";
+
+  if (payload.items.length === 0) {
+    return false;
+  }
+
+  const blocks = payload.items.map((item, index) => {
+    const url = apartmentPublicUrl(item.apartmentId);
+    const ownerPhoneLine = item.ownerPhone
+      ? phoneLink(item.ownerPhone)
+      : escapeHtml("—");
+    const guestLine = item.guestName || item.guestPhone || "—";
+    const guestPhoneLine = item.guestPhone
+      ? phoneLink(item.guestPhone)
+      : escapeHtml("—");
+
+    return `
+<b>${index + 1}. ${escapeHtml(item.apartmentTitle)}</b>
+<b>Адреса:</b> ${escapeHtml(`${item.city}, ${item.address}`)}
+<b>Хазяїн:</b> ${escapeHtml(item.ownerName?.trim() || "—")}
+<b>Тел. хазяїна:</b> ${ownerPhoneLine}
+<b>Заїзд:</b> ${escapeHtml(item.checkInLabel)} · <b>До:</b> ${escapeHtml(item.checkOutLabel)}
+<b>Гість:</b> ${escapeHtml(guestLine)}
+<b>Тел. гостя:</b> ${guestPhoneLine}
+<b>Гостей:</b> ${item.guestCount ?? "—"}
+<a href="${url}">Квартира на сайті →</a>
+    `.trim();
+  });
+
+  return tryNotifyTelegram(
+    `
+${line}
+<b>🏨 ЗАСЕЛЕННЯ СЬОГОДНІ</b>
+📅 ${escapeHtml(payload.dateLabel)}
+${line}
+
+${blocks.join(`\n\n${line}\n\n`)}
+
+<a href="${siteUrl()}/admin/bookings">Відкрити бронювання →</a>
+🕐 ${new Date().toLocaleString("uk-UA")}
+  `.trim(),
+  );
 }

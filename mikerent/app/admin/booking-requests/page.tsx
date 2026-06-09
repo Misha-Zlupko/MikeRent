@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { ClipboardList, Calendar } from "lucide-react";
+import { ArrowLeft, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import RequestActions from "@/components/admin/booking-requests/RequestActions";
 
@@ -26,7 +26,7 @@ export default async function BookingRequestsPage() {
             className="text-gray-500 hover:text-gray-700 transition-colors"
             title="Назад до дашборду"
           >
-            <Calendar size={24} />
+            <ArrowLeft size={24} />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Заявки на бронювання</h1>

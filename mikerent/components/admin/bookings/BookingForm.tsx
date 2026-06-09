@@ -14,7 +14,7 @@ import type { BookingRecordType, PaymentStatus } from "@prisma/client";
 import { calcPrepaymentTotals } from "@/lib/bookingPrepayment";
 import {
   BOOKING_AMOUNT_UAH_FACTOR,
-  bookingStoredToUah,
+  bookingMoneyToUah,
   uahToBookingStored,
 } from "@/lib/bookingAmounts";
 import { bookingRangeToCalendarIso } from "@/lib/bookingCalendarDates";
@@ -142,23 +142,16 @@ export default function BookingForm({
     const n = Math.ceil(
       Math.abs(to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24),
     );
+    const money = bookingMoneyToUah(initialBooking);
     if (n > 0) {
-      const ownerUah =
-        (initialBooking.ownerPayout ?? 0) * BOOKING_AMOUNT_UAH_FACTOR;
-      const profitUah =
-        (initialBooking.ourProfit ?? 0) * BOOKING_AMOUNT_UAH_FACTOR;
-      setOwnerPricePerNight(roundMoney2(ownerUah / n));
-      setMarkupPerNight(roundMoney2(profitUah / n));
+      setOwnerPricePerNight(roundMoney2(money.ownerPayout / n));
+      setMarkupPerNight(roundMoney2(money.ourProfit / n));
     } else {
       setOwnerPricePerNight(0);
       setMarkupPerNight(0);
     }
-    setPrepaidToMe(
-      roundMoney2(bookingStoredToUah(initialBooking.prepaidToMe) ?? 0),
-    );
-    setPrepaidToOwner(
-      roundMoney2(bookingStoredToUah(initialBooking.prepaidToOwner) ?? 0),
-    );
+    setPrepaidToMe(roundMoney2(money.prepaidToMe));
+    setPrepaidToOwner(roundMoney2(money.prepaidToOwner));
     setPaymentStatus(initialBooking.paymentStatus ?? "UNPAID");
     setRecordType(initialBooking.recordType ?? "AGENCY");
   }, [initialBooking]);

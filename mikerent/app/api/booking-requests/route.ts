@@ -6,6 +6,7 @@ import {
   getMissingPriceMonths,
 } from "@/lib/monthlyPricing";
 import {
+  APARTMENT_TELEGRAM_SELECT,
   mapBookingRequestFromDb,
   notifyBookingRequestNew,
 } from "@/lib/telegramNotify";
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
       },
       include: {
         apartment: {
-          select: { title: true },
+          select: APARTMENT_TELEGRAM_SELECT,
         },
       },
     });

@@ -3,10 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { hasOverlappingActiveBooking } from "@/lib/bookingOverlap";
+import { uahToBookingStored } from "@/lib/bookingAmounts";
 import {
+  mapBookingFromDb,
   mapBookingRequestFromDb,
+  notifyBookingNew,
   notifyBookingRequestConfirmFailed,
-  notifyBookingRequestProcessed,
 } from "@/lib/telegramNotify";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
@@ -88,7 +90,7 @@ export async function POST(
           guestContact: request.comment,
           status: "CONFIRMED",
           ownerPhone: request.apartment.ownerPhone ?? null,
-          totalAmount: request.totalPrice,
+          totalAmount: uahToBookingStored(request.totalPrice),
         },
         include: { apartment: true },
       });
@@ -105,9 +107,11 @@ export async function POST(
       return booking;
     });
 
-    await notifyBookingRequestProcessed(notifyPayload, "CONFIRMED", {
-      bookingId: result.id,
-    });
+    await notifyBookingNew(
+      mapBookingFromDb(result, result.apartment, "Підтвердження заявки", {
+        bookingRequestNumber: request.bookingNumber,
+      }),
+    );
 
     return NextResponse.json({ success: true, bookingId: result.id });
   } catch (error) {
