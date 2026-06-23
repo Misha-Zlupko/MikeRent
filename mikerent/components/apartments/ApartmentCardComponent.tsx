@@ -27,6 +27,7 @@ type Props = {
   apartment: Apartment;
   priceAnchorDate?: Date | null;
   priority?: boolean;
+  onBeforeOpen?: () => void;
 };
 
 const FAVORITES_KEY = "favorites";
@@ -35,6 +36,7 @@ export const ApartmentCard = ({
   apartment,
   priceAnchorDate = null,
   priority = false,
+  onBeforeOpen,
 }: Props) => {
   const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -103,7 +105,8 @@ export const ApartmentCard = ({
       swipeMovedRef.current = false;
       return;
     }
-    router.push(apartmentHref);
+    onBeforeOpen?.();
+    router.push(apartmentHref, { scroll: false });
   };
 
   if (images.length === 0) {
@@ -186,6 +189,7 @@ export const ApartmentCard = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
+                    onBeforeOpen?.();
                     router.push(apartmentHref);
                   }
                 }}
@@ -237,7 +241,12 @@ export const ApartmentCard = ({
         </div>
       </div>
 
-      <Link href={apartmentHref} className="flex flex-1 flex-col p-4 max-md:p-2.5">
+      <Link
+        href={apartmentHref}
+        scroll={false}
+        onClick={() => onBeforeOpen?.()}
+        className="flex flex-1 flex-col p-4 max-md:p-2.5"
+      >
         <h3 className="mb-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 transition group-hover:text-main max-md:mb-1 max-md:text-[13px]">
           {apartment.title}
         </h3>

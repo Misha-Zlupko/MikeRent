@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { SearchForm } from "@/components/search/SearchFormComponent";
 import { ApartmentsGrid } from "@/components/apartments/ApartmentsGridComponent";
@@ -9,6 +9,7 @@ import type { ApartmentType } from "@/data/ApartmentsTypes";
 import type { DateRange as CalendarDateRange } from "@/components/SeasonCalendarComponent";
 import { ButtonFilterApartments } from "@/components/buttons/ButtonFilterComponent";
 import { LazyWhenVisible } from "@/components/ui/LazyWhenVisible";
+import { readHomeSearchFromSession } from "@/lib/apartmentsListSession";
 
 const CustomerComments = dynamic(
   () =>
@@ -35,6 +36,20 @@ export function HomeClient({ apartments }: Props) {
   const [adults, setAdults] = useState(1);
   const [childrenCount, setChildrenCount] = useState(0);
   const [typeFilter, setTypeFilter] = useState<ApartmentType | null>(null);
+
+  // Після гідратації — відновити фільтри (не читати sessionStorage при першому рендері)
+  useEffect(() => {
+    const saved = readHomeSearchFromSession();
+    if (!saved) return;
+
+    setDateRange({
+      from: saved.dateFrom ? new Date(saved.dateFrom) : null,
+      to: saved.dateTo ? new Date(saved.dateTo) : null,
+    });
+    setAdults(saved.adults);
+    setChildrenCount(saved.childrenCount);
+    setTypeFilter(saved.typeFilter);
+  }, []);
 
   const handleSearch = (params: {
     dateRange: CalendarDateRange;
@@ -90,6 +105,13 @@ export function HomeClient({ apartments }: Props) {
           dateRange={dateRange as CalendarDateRange}
           guests={adults + childrenCount}
           typeFilter={typeFilter}
+          searchSnapshot={{
+            typeFilter,
+            adults,
+            childrenCount,
+            dateFrom: dateRange.from?.toISOString() ?? null,
+            dateTo: dateRange.to?.toISOString() ?? null,
+          }}
         />
       </section>
 
