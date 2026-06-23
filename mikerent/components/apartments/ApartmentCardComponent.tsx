@@ -106,7 +106,7 @@ export const ApartmentCard = ({
       return;
     }
     onBeforeOpen?.();
-    router.push(apartmentHref, { scroll: false });
+    router.push(apartmentHref);
   };
 
   if (images.length === 0) {
@@ -243,7 +243,6 @@ export const ApartmentCard = ({
 
       <Link
         href={apartmentHref}
-        scroll={false}
         onClick={() => onBeforeOpen?.()}
         className="flex flex-1 flex-col p-4 max-md:p-2.5"
       >
